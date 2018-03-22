@@ -3,6 +3,8 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
 
+#include "ConnectionManager.h"
+
 class CommAudio : public QMainWindow
 {
 	Q_OBJECT
