@@ -14,7 +14,7 @@
    <string>CommAudio</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="labelCurrentSong">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -187,8 +187,14 @@
      </item>
      <item>
       <widget class="QSlider" name="sliderVolume">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
        <property name="value">
-        <number>99</number>
+        <number>100</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -227,6 +233,7 @@
     </property>
     <addaction name="actionPublicSongFolder"/>
     <addaction name="actionDownloadFolder"/>
+    <addaction name="actionSetName"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSession"/>
@@ -261,6 +268,11 @@
   <action name="actionLeaveSession">
    <property name="text">
     <string>Leave Session</string>
+   </property>
+  </action>
+  <action name="actionSetName">
+   <property name="text">
+    <string>Set Name</string>
    </property>
   </action>
  </widget>

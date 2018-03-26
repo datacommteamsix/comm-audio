@@ -2,10 +2,13 @@
 
 CommAudio::CommAudio(QWidget * parent)
 	: QMainWindow(parent)
-	, mLocalIp(getLocalIp())
+	, mIsHost(false)
+	, mName(QHostInfo::localHostName())
 	, mSessionKey()
+	, mPlayer(new QMediaPlayer())
 	, mServer(this)
-	, mConnectins()
+	, mConnections()
+	, mPendingConnections()
 {
 	ui.setupUi(this);
 	
@@ -14,8 +17,18 @@ CommAudio::CommAudio(QWidget * parent)
 	mSongFolder = tmp;
 	mDownloadFolder = tmp;
 
+	// Configure the media player
+	mPlayer->setVolume(100);
+	// Set volume
+	connect(ui.sliderVolume, &QSlider::sliderMoved, mPlayer, &QMediaPlayer::setVolume);
+	// Song progress
+	connect(mPlayer, &QMediaPlayer::positionChanged, this, &CommAudio::songProgressHandler);
+
 	// Closing the application
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
+
+	// Changing name
+	connect(ui.actionSetName, &QAction::triggered, this, &CommAudio::changeNameHandler);
 
 	// Host, Join, Leave session buttons
 	connect(ui.actionHostSession, &QAction::triggered, this, &CommAudio::hostSessionHandler);
@@ -25,6 +38,9 @@ CommAudio::CommAudio(QWidget * parent)
 	// Changing targeted folders
 	connect(ui.actionPublicSongFolder, &QAction::triggered, this, &CommAudio::changeSongFolderHandler);
 	connect(ui.actionDownloadFolder, &QAction::triggered, this, &CommAudio::changeDownloadFolderHandler);
+
+	// Populate local song list
+	populateLocalSongsList();
 
 	// Audio Control Buttons
 	connect(ui.btnPlaySong, &QPushButton::pressed, this, &CommAudio::playSongButtonHandler);
@@ -36,34 +52,77 @@ CommAudio::CommAudio(QWidget * parent)
 	mServer.listen(QHostAddress::Any, 42069);
 }
 
-QString CommAudio::getLocalIp()
+CommAudio::~CommAudio()
 {
-	QList<QHostAddress> addresses = QNetworkInterface::allAddresses();
+	delete mPlayer;
+}
 
-	for (auto address : addresses)
+void CommAudio::populateLocalSongsList()
+{
+	QStringList songs = mSongFolder.entryList({ "*.wav", "*.mp3" , "*.m4a" }, 
+		QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+
+	// Create a list of widgets
+	QList<QTreeWidgetItem *> items;
+	for (QString song : songs)
 	{
-		if (address.protocol() == QTcpSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost))
-		{
-			return address.toString();
-		}
+		items.append(new QTreeWidgetItem(ui.treeLocalSongs, QStringList(song)));
 	}
 
-	return QString();
+	// Add the list of widgets to tree
+	ui.treeLocalSongs->insertTopLevelItems(0, items);
 }
 
 void CommAudio::hostSessionHandler()
 {
+	// Generate session key
+	QCryptographicHash hasher(QCryptographicHash::Sha3_256);
 
+	for (int i = 0; i < qrand() % 10; i++)
+	{
+		switch (qrand() % 4)
+		{
+		case 0:
+			hasher.addData(QHostInfo::localHostName().toUtf8());
+			break;
+		case 1:
+			hasher.addData(QString::number(pos().x()).toUtf8());
+			break;
+		case 2:
+			hasher.addData(QString::number(pos().y()).toUtf8());
+			break;
+		case 3:
+		default:
+			break;
+		}
+	}
+	mSessionKey = hasher.result();
+
+	// Set host mode to true
+	mIsHost = true;
 }
 
 void CommAudio::joinSessionHandler()
 {
+	mIsHost = false;
+	mSessionKey = QByteArray();
 
+	// Send Request to join session here
 }
 
 void CommAudio::leaveSessionHandler()
 {
+	mIsHost = false;
+	mSessionKey = QByteArray();
 
+	// Send notice of leave to all connected members
+
+	// Disconnect from all memebers
+}
+
+void CommAudio::changeNameHandler()
+{
+	mName = QInputDialog::getText(this, tr("Enter new name"), "Name: ", QLineEdit::Normal);
 }
 
 void CommAudio::changeSongFolderHandler()
@@ -73,6 +132,8 @@ void CommAudio::changeSongFolderHandler()
 		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
 	mSongFolder = QDir(dir);
+
+	populateLocalSongsList();
 }
 
 void CommAudio::changeDownloadFolderHandler()
@@ -86,7 +147,35 @@ void CommAudio::changeDownloadFolderHandler()
 
 void CommAudio::playSongButtonHandler()
 {
+	if (mPlayer->state() == QMediaPlayer::PlayingState)
+	{
+		mPlayer->pause();
+		
+		if (mPlayer->state() == QMediaPlayer::PausedState)
+		{
+			ui.btnPlaySong->setText("Play");
+		}
+	}
 
+	if (mPlayer->state() == QMediaPlayer::StoppedState)
+	{
+		mPlayer->play();
+
+		if (mPlayer->state() == QMediaPlayer::PlayingState)
+		{
+			ui.btnPlaySong->setText("Pause");
+		}
+	}
+
+	if (mPlayer->state() == QMediaPlayer::PausedState)
+	{
+		mPlayer->play();
+
+		if (mPlayer->state() == QMediaPlayer::PlayingState)
+		{
+			ui.btnPlaySong->setText("Pause");
+		}
+	}
 }
 
 void CommAudio::prevSongButtonHandler()
@@ -99,28 +188,48 @@ void CommAudio::nextSongButtonHandler()
 
 }
 
+void CommAudio::songProgressHandler(qint64 ms)
+{
+	int progress = (ms / mPlayer->duration()) * 100;
+	QString milliseconds = QString::number(ms % 1000);
+	QString seconds = QString::number((ms - (ms % 1000)) / 1000);
+	// set label text
+	ui.labelCurrentTime->setText(seconds + ":" + milliseconds);
+	ui.sliderProgress->setValue(progress);
+}
+
 void CommAudio::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
-	QString hostname = QHostAddress(socket->peerAddress().toIPv4Address()).toString();
+	QHostAddress address = socket->peerAddress();
 
-	if (mConnectins.contains(hostname))
-	{
-		qDebug() << "Connection to this host already exists";
-		delete socket;
-		return;
-	}
-
+	// Connect socket and add connection to map of pending connections
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
-	mConnectins[hostname] = socket;
-	qDebug() << hostname << "was added to connections";
+	mPendingConnections[address.toString()] = socket;
 }
 
 void CommAudio::incomingDataHandler()
 {
 	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
-	QHostAddress address = QHostAddress(sender->peerAddress().toIPv4Address());
 	QByteArray data = sender->readAll();
-	qDebug() << address.toString() << "sent" << data;
-	mConnectins[address.toString()]->write(data);
+
+	if (mIsHost)
+	{
+		parsePacketHost(sender, data);
+	}
+	else
+	{
+		parsePacketClient(sender, data);
+	}
+}
+
+void CommAudio::parsePacketHost(const QTcpSocket * sender, const QByteArray data)
+{
+	QHostAddress address = sender->peerAddress();
+
+}
+
+void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray data)
+{
+	QHostAddress address = sender->peerAddress();
 }

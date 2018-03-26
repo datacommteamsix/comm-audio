@@ -9,11 +9,18 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QHostAddress>
+#include <QHostInfo>
+#include <QInputDialog>
 #include <QList>
 #include <QMap>
+#include <QMediaPlayer>
 #include <QNetworkInterface>
+#include <QPoint>
 #include <QPushButton>
+#include <QSlider>
 #include <QString>
+#include <QStringList>
+#include <QTreeWidgetItem>
 #include <QTcpSocket>
 #include <QTcpServer>
 
@@ -26,6 +33,7 @@ class CommAudio : public QMainWindow
 
 public:
 	CommAudio(QWidget * parent = Q_NULLPTR);
+	~CommAudio();
 
 private:
 
@@ -43,15 +51,24 @@ private:
 
 	Ui::CommAudioClass ui;
 
+	bool mIsHost;
+	QString mName;
+	QByteArray mSessionKey;
+
 	QDir mSongFolder;
 	QDir mDownloadFolder;
 
-	QString mLocalIp;
-	QByteArray mSessionKey;
+	QMediaPlayer * mPlayer;
 
-	QString getLocalIp();
 	QTcpServer mServer;
-	QMap<QString, QTcpSocket *> mConnectins;
+
+	QMap<QString, QTcpSocket *> mPendingConnections;
+	QMap<QString, QTcpSocket *> mConnections;
+
+	void populateLocalSongsList();
+
+	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
+	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
 
 private slots:
 	// UI
@@ -59,12 +76,15 @@ private slots:
 	void joinSessionHandler();
 	void leaveSessionHandler();
 
+	void changeNameHandler();
 	void changeSongFolderHandler();
 	void changeDownloadFolderHandler();
 
 	void playSongButtonHandler();
 	void prevSongButtonHandler();
 	void nextSongButtonHandler();
+
+	void songProgressHandler(qint64 ms);
 
 	// Networking
 	void newConnectionHandler();
