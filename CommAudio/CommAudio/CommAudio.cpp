@@ -1,6 +1,6 @@
 #include "CommAudio.h"
 
-CommAudio::CommAudio(QWidget *parent)
+CommAudio::CommAudio(QWidget * parent)
 	: QMainWindow(parent)
 	, mLocalIp(getLocalIp())
 	, mSessionKey()
@@ -102,7 +102,7 @@ void CommAudio::nextSongButtonHandler()
 void CommAudio::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
-	QString hostname = socket->peerName();
+	QString hostname = QHostAddress(socket->peerAddress().toIPv4Address()).toString();
 
 	if (mConnectins.contains(hostname))
 	{
@@ -119,7 +119,8 @@ void CommAudio::newConnectionHandler()
 void CommAudio::incomingDataHandler()
 {
 	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
+	QHostAddress address = QHostAddress(sender->peerAddress().toIPv4Address());
 	QByteArray data = sender->readAll();
-	qDebug() << data;
-	mConnectins[sender->peerName()]->write(data);
+	qDebug() << address.toString() << "sent" << data;
+	mConnectins[address.toString()]->write(data);
 }

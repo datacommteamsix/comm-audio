@@ -25,7 +25,7 @@ class CommAudio : public QMainWindow
 	Q_OBJECT
 
 public:
-	CommAudio(QWidget *parent = Q_NULLPTR);
+	CommAudio(QWidget * parent = Q_NULLPTR);
 
 private:
 
@@ -43,7 +43,7 @@ private:
 
 	Ui::CommAudioClass ui;
 
-	QDir mSharedFolder;
+	QDir mSongFolder;
 	QDir mDownloadFolder;
 
 	QString mLocalIp;
