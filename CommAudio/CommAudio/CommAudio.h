@@ -7,6 +7,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#include <QFileDialog>
 #include <QHostAddress>
 #include <QList>
 #include <QMap>

@@ -11,7 +11,7 @@ CommAudio::CommAudio(QWidget *parent)
 	
 	// Setting default folder to home/comm-audio
 	QDir tmp = QDir(QDir::homePath() + "/comm-audio");
-	mSharedFolder = tmp;
+	mSongFolder = tmp;
 	mDownloadFolder = tmp;
 
 	// Closing the application
@@ -68,12 +68,20 @@ void CommAudio::leaveSessionHandler()
 
 void CommAudio::changeSongFolderHandler()
 {
+	QString dir = QFileDialog::getExistingDirectory(this, 
+		tr("Select Song Folder"), QDir::homePath(), 
+		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
+	mSongFolder = QDir(dir);
 }
 
 void CommAudio::changeDownloadFolderHandler()
 {
+	QString dir = QFileDialog::getExistingDirectory(this, 
+		tr("Select Download Folder"), QDir::homePath(), 
+		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
+	mDownloadFolder = QDir(dir);
 }
 
 void CommAudio::playSongButtonHandler()
