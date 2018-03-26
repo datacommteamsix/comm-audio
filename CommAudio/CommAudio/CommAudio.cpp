@@ -17,12 +17,19 @@ CommAudio::CommAudio(QWidget * parent)
 	mSongFolder = tmp;
 	mDownloadFolder = tmp;
 
+	// Song Lists
+	connect(ui.treeLocalSongs, &QTreeWidget::itemClicked, this, &CommAudio::localSongClickedHandler);
+
 	// Configure the media player
 	mPlayer->setVolume(100);
 	// Set volume
 	connect(ui.sliderVolume, &QSlider::sliderMoved, mPlayer, &QMediaPlayer::setVolume);
+	// Song state changed
+	connect(mPlayer, &QMediaPlayer::stateChanged, this, &CommAudio::songStateChangeHandler);
 	// Song progress
 	connect(mPlayer, &QMediaPlayer::positionChanged, this, &CommAudio::songProgressHandler);
+	// Song length
+	connect(mPlayer, &QMediaPlayer::durationChanged, this, &CommAudio::songDurationHandler);
 
 	// Closing the application
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
@@ -71,6 +78,11 @@ void CommAudio::populateLocalSongsList()
 
 	// Add the list of widgets to tree
 	ui.treeLocalSongs->insertTopLevelItems(0, items);
+}
+
+void CommAudio::setCurrentlyPlayingSong(const QString songname)
+{
+	mPlayer->setMedia(QUrl::fromLocalFile(mSongFolder.absoluteFilePath(songname)));
 }
 
 void CommAudio::hostSessionHandler()
@@ -150,31 +162,16 @@ void CommAudio::playSongButtonHandler()
 	if (mPlayer->state() == QMediaPlayer::PlayingState)
 	{
 		mPlayer->pause();
-		
-		if (mPlayer->state() == QMediaPlayer::PausedState)
-		{
-			ui.btnPlaySong->setText("Play");
-		}
 	}
 
 	if (mPlayer->state() == QMediaPlayer::StoppedState)
 	{
 		mPlayer->play();
-
-		if (mPlayer->state() == QMediaPlayer::PlayingState)
-		{
-			ui.btnPlaySong->setText("Pause");
-		}
 	}
 
 	if (mPlayer->state() == QMediaPlayer::PausedState)
 	{
 		mPlayer->play();
-
-		if (mPlayer->state() == QMediaPlayer::PlayingState)
-		{
-			ui.btnPlaySong->setText("Pause");
-		}
 	}
 }
 
@@ -188,14 +185,54 @@ void CommAudio::nextSongButtonHandler()
 
 }
 
+void CommAudio::songStateChangeHandler(QMediaPlayer::State state)
+{
+	switch (state)
+	{
+	case QMediaPlayer::PlayingState:
+		ui.btnPlaySong->setText("Pause");
+		break;
+	case QMediaPlayer::StoppedState:
+	case QMediaPlayer::PausedState:
+	default:
+		ui.btnPlaySong->setText("Play");
+		break;
+	}
+}
+
 void CommAudio::songProgressHandler(qint64 ms)
 {
-	int progress = (ms / mPlayer->duration()) * 100;
-	QString milliseconds = QString::number(ms % 1000);
-	QString seconds = QString::number((ms - (ms % 1000)) / 1000);
-	// set label text
-	ui.labelCurrentTime->setText(seconds + ":" + milliseconds);
-	ui.sliderProgress->setValue(progress);
+	if (mPlayer->isAudioAvailable())
+	{
+		int progress = ((float)ms / mPlayer->duration()) * 100;
+		ui.sliderProgress->setValue(progress);
+
+		// set label text
+		qint64 milliseconds = ms % 1000;
+		qint64 seconds = (ms - milliseconds) / 1000;
+		qint64 minutes = (seconds - (seconds % 60)) / 60;
+
+		ui.labelCurrentTime->setText(QString::number(minutes) + ":" + QString::number(seconds));
+	}
+}
+
+void CommAudio::songDurationHandler(qint64 ms)
+{
+	if (mPlayer->isAudioAvailable())
+	{
+		qint64 milliseconds = ms % 1000;
+		qint64 seconds = (ms - milliseconds) / 1000;
+		qint64 minutes = (seconds - (seconds % 60)) / 60;
+
+		ui.labelTotalTime->setText(QString::number(minutes) + ":" + QString::number(seconds));
+	}
+}
+
+void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
+{
+	QString song = item->text(0);
+	
+	setCurrentlyPlayingSong(song);
 }
 
 void CommAudio::newConnectionHandler()

@@ -23,6 +23,7 @@
 #include <QTreeWidgetItem>
 #include <QTcpSocket>
 #include <QTcpServer>
+#include <QUrl>
 
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
@@ -66,6 +67,7 @@ private:
 	QMap<QString, QTcpSocket *> mConnections;
 
 	void populateLocalSongsList();
+	void setCurrentlyPlayingSong(const QString songname);
 
 	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
 	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
@@ -84,7 +86,11 @@ private slots:
 	void prevSongButtonHandler();
 	void nextSongButtonHandler();
 
+	void songStateChangeHandler(QMediaPlayer::State state);
 	void songProgressHandler(qint64 ms);
+	void songDurationHandler(qint64 ms);
+
+	void localSongClickedHandler(QTreeWidgetItem * item, int column);
 
 	// Networking
 	void newConnectionHandler();
