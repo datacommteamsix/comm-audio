@@ -28,6 +28,8 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
 
+#define SUPPORTED_FORMATS { "*.wav", "*.mp3" }
+
 class CommAudio : public QMainWindow
 {
 	Q_OBJECT
@@ -37,7 +39,7 @@ public:
 	~CommAudio();
 
 private:
-
+	// Variables
 	enum Headers
 	{
 		RequestToJoin,
@@ -66,8 +68,9 @@ private:
 	QMap<QString, QTcpSocket *> mPendingConnections;
 	QMap<QString, QTcpSocket *> mConnections;
 
+	// Functions
 	void populateLocalSongsList();
-	void setCurrentlyPlayingSong(const QString songname);
+	void loadSong(const QString songname);
 
 	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
 	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
@@ -85,6 +88,8 @@ private slots:
 	void playSongButtonHandler();
 	void prevSongButtonHandler();
 	void nextSongButtonHandler();
+
+	void seekPositionHandler(int position);
 
 	void songStateChangeHandler(QMediaPlayer::State state);
 	void songProgressHandler(qint64 ms);
