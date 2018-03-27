@@ -213,10 +213,8 @@ void CommAudio::populateLocalSongsList()
 void CommAudio::loadSong(const QString songname)
 {
 	// Stop any current song
-	if (mPlayer->state() == QMediaPlayer::PlayingState)
-	{
-		mPlayer->stop();
-	}
+	mPlayer->stop();
+	mPlayer->setPosition(0);
 
 	// Set the song
 	mPlayer->setMedia(QUrl::fromLocalFile(mSongFolder.absoluteFilePath(songname)));
@@ -413,21 +411,17 @@ void CommAudio::changeDownloadFolderHandler()
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::playSongButtonHandler()
 {
-	if (mPlayer->state() == QMediaPlayer::PlayingState)
+	switch (mPlayer->state())
 	{
+	case QMediaPlayer::PlayingState:
 		mPlayer->pause();
-	} 
-	else if (mPlayer->state() == QMediaPlayer::StoppedState)
-	{
+		break;
+	case QMediaPlayer::StoppedState:
+	case QMediaPlayer::PausedState:
 		mPlayer->play();
-	} 
-	else if (mPlayer->state() == QMediaPlayer::PausedState)
-	{
-		mPlayer->play();
-	}
-	else
-	{
-		qDebug() << "QMediaPlayer entered impossible state";
+		break;
+	default:
+		break;
 	}
 }
 
@@ -539,7 +533,8 @@ void CommAudio::songProgressHandler(qint64 ms)
 		qint64 seconds = (ms - milliseconds) / 1000;
 		qint64 minutes = (seconds - (seconds % 60)) / 60;
 
-		ui.labelCurrentTime->setText(QString::number(minutes) + ":" + QString::number(seconds));
+		QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
+		ui.labelCurrentTime->setText(labelText);
 
 		// Update slider
 		ui.sliderProgress->setValue(ms);
@@ -578,7 +573,8 @@ void CommAudio::songDurationHandler(qint64 ms)
 		qint64 seconds = ((ms - milliseconds) / 1000);
 		qint64 minutes = (seconds - (seconds % 60)) / 60;
 
-		ui.labelTotalTime->setText(QString::number(minutes) + ":" + QString::number(seconds % 60));
+		QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
+		ui.labelTotalTime->setText(labelText);
 
 		// Change slider max
 		ui.sliderProgress->setMaximum(ms);
