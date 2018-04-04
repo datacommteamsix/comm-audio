@@ -67,6 +67,8 @@ private:
 	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
 	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
 
+	void connectToAllOtherClients(const QByteArray data);
+
 private slots:
 	// UI
 	void hostSessionHandler();

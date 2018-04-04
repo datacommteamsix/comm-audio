@@ -274,7 +274,23 @@ void CommAudio::joinSessionHandler()
 	mConnectionManager.BecomeClient();
 	mSessionKey = QByteArray();
 
-	// Send Request to join session here
+	// Send Request to join session
+	QByteArray joinRequest = QByteArray(1 + 33, (char)0);
+	joinRequest[0] = (char)Headers::RequestToJoin;
+	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
+	joinRequest.resize(1 + 33);
+
+	assert(joinRequest.size() == 1 + 33);
+
+	// Send request to host
+	QTcpSocket * socket = new QTcpSocket(this);
+	socket->connectToHost("127.0.0.1", 42069);
+	mConnections["Hard Coded Host Name"] = socket;
+	socket->write(joinRequest);
+
+	QStringList host;
+	host << "Hard Coded Host Name" << "Host";
+	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 }
 
 void CommAudio::leaveSessionHandler()
@@ -648,6 +664,47 @@ void CommAudio::parsePacketHost(const QTcpSocket * sender, const QByteArray data
 void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray data)
 {
 	QHostAddress address = sender->peerAddress();
+	
+	switch (data[0])
+	{
+	case Headers::RespondToJoin:
+		connectToAllOtherClients(data);
+		break;
+	default:
+		break;
+	}
 
 	// Client packet logic goes here
+}
+
+void CommAudio::connectToAllOtherClients(const QByteArray data)
+{
+	// Grab session key
+	mSessionKey = data.mid(1, 32);
+
+	// Grab the length
+	int length = -1;
+	QByteArray len = data.mid(32, sizeof(int));
+	memcpy(&length, len.data(), sizeof(int));
+
+	// Craft connect request
+
+	// Send connect request to all other clients in the session
+	int offset = 1 + 32 + 4;
+
+	QByteArray joinRequest = QByteArray(1 + 33, (char)0);
+	joinRequest[0] = (char)Headers::RequestToJoin;
+	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
+	joinRequest.resize(1 + 33);
+
+	assert(joinRequest.size() == 1 + 33);
+
+	for (int i = 0; i < length; i++)
+	{
+		QString address = QString(data.mid(offset, 32));
+		QTcpSocket * socket = new QTcpSocket(this);
+		socket->connectToHost(address, 42069);
+		socket->write(joinRequest);
+	}
+
 }

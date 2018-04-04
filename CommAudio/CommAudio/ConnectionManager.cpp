@@ -30,6 +30,13 @@ void ConnectionManager::BecomeClient()
 	mKey = QByteArray();
 }
 
+void ConnectionManager::AddPendingConnection(const QString address, QTcpSocket * socket)
+{
+	assert(socket != nullptr);
+	mPendingConnections[address] = socket;
+	connect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
+}
+
 void ConnectionManager::startServerListen()
 {
 	connect(&mServer, &QTcpServer::newConnection, this, &ConnectionManager::newConnectionHandler);
@@ -86,9 +93,9 @@ void ConnectionManager::incomingDataHandler()
 	QByteArray data = socket->readAll();
 
 	// Check if incoming data is a valid request to join packet
-	if (data.size() != 33)
+	if (data.size() != 1 + 33)
 	{
-		qDebug() << "Expecting request to join packet of length" << 33 << "but packet of size" << data.size() << "was received";
+		qDebug() << "Expecting request to join packet of length" << 1 + 33 << "but packet of size" << data.size() << "was received";
 		return;
 	}
 

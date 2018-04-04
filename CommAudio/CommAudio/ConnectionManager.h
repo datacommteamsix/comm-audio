@@ -25,6 +25,8 @@ public:
 	void BecomeHost(QMap<QString, QTcpSocket *> * connectedClients, QByteArray key);
 	void BecomeClient();
 
+	void AddPendingConnection(const QString address, QTcpSocket * socket);
+
 private:
 	bool mIsHost;
 	QByteArray mKey;
