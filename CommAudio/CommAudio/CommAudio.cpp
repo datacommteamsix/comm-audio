@@ -240,9 +240,9 @@ void CommAudio::hostSessionHandler()
 	// Generate session key
 	QCryptographicHash hasher(QCryptographicHash::Sha3_256);
 
-	for (int i = 0; i < qrand() % 10; i++)
+	for (int i = 0; i < rand() % 1000; i++)
 	{
-		switch (qrand() % 4)
+		switch (rand() % 4)
 		{
 		case 0:
 			hasher.addData(QHostInfo::localHostName().toUtf8());
@@ -271,6 +271,7 @@ void CommAudio::hostSessionHandler()
 void CommAudio::joinSessionHandler()
 {
 	mIsHost = false;
+	mConnectionManager.BecomeClient();
 	mSessionKey = QByteArray();
 
 	// Send Request to join session here
@@ -279,6 +280,7 @@ void CommAudio::joinSessionHandler()
 void CommAudio::leaveSessionHandler()
 {
 	mIsHost = false;
+	mConnectionManager.BecomeClient();
 	mSessionKey = QByteArray();
 
 	// Send notice of leave to all connected members
@@ -606,13 +608,8 @@ void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 
 void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 {
-	// Remove the connection if they are trying to connect a second time
-	if (mConnections.contains(name))
-	{
-		qDebug() << name << "-" << socket << "is already connected";
-		socket->close();
-		delete socket;
-	}
+	assert(socket != nullptr);
+	assert(!mConnections.contains(name));
 
 	// Add the new client to the map of clients
 	mConnections[name] = socket;

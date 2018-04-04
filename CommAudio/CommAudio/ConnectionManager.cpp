@@ -38,24 +38,33 @@ void ConnectionManager::startServerListen()
 
 void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 {
-	QByteArray packet = QByteArray(1, (char)Headers::RespondToJoin);
+	QByteArray packet = QByteArray(1 + 32 + 4, 0);
+	packet[0] = (char)Headers::RespondToJoin;
 
 	// Add the session key to the packet
-	packet += mKey;
+	packet.replace(1, 32, mKey);
 
 	// Add the number of clients to the packet
-	int size = mConnectedClients->size();
-	char bytes[sizeof(size)];
-	memcpy(bytes, &size, sizeof(size));
-	packet += bytes;
+	int size = mConnectedClients->size() - 1;
+
+	char bytes[sizeof(int)];
+	memcpy(bytes, &size, sizeof(int));
+	packet.replace(1 + 32, sizeof(int), bytes);
+
+	// Resize the array because QByteArray will chop off trailing 0x00s
+	packet.resize(1 + 32 + 4);
 
 	// Assert the packet header is the correct length
 	assert(packet.size() == 1 + 32 + 4);
 
 	// Send list of currently connected clients to the new client
-	for (QTcpSocket * socket : *mConnectedClients)
+	for (QTcpSocket * connection : *mConnectedClients)
 	{
-		packet += socket->peerAddress().toString();
+		// Do not send the new client it's own ip
+		if (connection->peerAddress() != socket->peerAddress())
+		{
+			packet += connection->peerAddress().toString();
+		}
 	}
 
 	socket->write(packet);
@@ -72,7 +81,8 @@ void ConnectionManager::newConnectionHandler()
 
 void ConnectionManager::incomingDataHandler()
 {
-	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
+	QString sender = ((QTcpSocket *)QObject::sender())->peerAddress().toString();
+	QTcpSocket * socket = mPendingConnections.take(sender);
 	QByteArray data = socket->readAll();
 
 	// Check if incoming data is a valid request to join packet
@@ -87,17 +97,28 @@ void ConnectionManager::incomingDataHandler()
 		qDebug() << "Header" << (char)data[0] << "does not match" << (char)Headers::RequestToJoin;
 	}
 
-	// Accept client
+	// Grab the name of the client
 	QString clientName = QString(data.mid(1));
-	emit connectionAccepted(clientName, socket);
 
-	if (mIsHost)
+	// Reject it if the client is already connected
+	if (mConnectedClients->contains(clientName))
 	{
-		// Respond according to protocol
-		sendListOfClients(socket);
+		qDebug() << clientName << "-" << "is already connected";
+		socket->close();
+		socket->deleteLater();
 	}
+	else
+	{
+		emit connectionAccepted(clientName, socket);
 
-	// Remove it from list of pending connection and stop listening for its request to connect packet
-	mPendingConnections.remove(socket->peerAddress().toString());
-	disconnect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
+		if (mIsHost)
+		{
+			// If this is a new client
+			sendListOfClients(socket);
+		}
+
+		// Remove it from list of pending connection and stop listening for its request to connect packet
+		mPendingConnections.remove(socket->peerAddress().toString());
+		disconnect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
+	}
 }

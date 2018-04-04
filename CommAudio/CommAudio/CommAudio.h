@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <QDebug>
 
 #include <QAction>
