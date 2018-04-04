@@ -28,6 +28,9 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
 
+#include "Headers.h"
+#include "ConnectionManager.h"
+
 #define SUPPORTED_FORMATS { "*.wav", "*.mp3" }
 
 class CommAudio : public QMainWindow
@@ -40,18 +43,6 @@ public:
 
 private:
 	// Variables
-	enum Headers
-	{
-		RequestToJoin,
-		AcceptJoin,
-		RequestForSongs,
-		RespondWithSongs,
-		RequestAudioStream,
-		RequestDownload,
-		RequestUpload,
-		NotifyQuit
-	};
-
 	Ui::CommAudioClass ui;
 
 	bool mIsHost;
@@ -63,9 +54,9 @@ private:
 
 	QMediaPlayer * mPlayer;
 
-	QTcpServer mServer;
+	//QTcpServer mServer;
+	ConnectionManager mConnectionManager;
 
-	QMap<QString, QTcpSocket *> mPendingConnections;
 	QMap<QString, QTcpSocket *> mConnections;
 
 	// Functions
@@ -98,6 +89,6 @@ private slots:
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
 
 	// Networking
-	void newConnectionHandler();
+	void newConnectionHandler(QString name, QTcpSocket * socket);
 	void incomingDataHandler();
 };

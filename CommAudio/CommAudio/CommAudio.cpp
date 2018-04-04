@@ -55,9 +55,8 @@ CommAudio::CommAudio(QWidget * parent)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
 	, mPlayer(new QMediaPlayer())
-	, mServer(this)
+	, mConnectionManager(this)
 	, mConnections()
-	, mPendingConnections()
 {
 	ui.setupUi(this);
 	
@@ -107,8 +106,7 @@ CommAudio::CommAudio(QWidget * parent)
 	connect(ui.sliderProgress, &QSlider::sliderMoved, this, &CommAudio::seekPositionHandler);
 
 	// Networking set up
-	connect(&mServer, &QTcpServer::newConnection, this, &CommAudio::newConnectionHandler);
-	mServer.listen(QHostAddress::Any, 42069);
+	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -134,15 +132,8 @@ CommAudio::CommAudio(QWidget * parent)
 ----------------------------------------------------------------------------------------------------------------------*/
 CommAudio::~CommAudio()
 {
-	for (QTcpSocket * socket : mPendingConnections)
+	for (QTcpSocket * socket : mConnections)
 	{
-		socket->close();
-		delete socket;
-	}
-
-	for (QTcpSocket * socket : mPendingConnections)
-	{
-		// Send packet to notify of disconnection
 		socket->close();
 		delete socket;
 	}
@@ -272,6 +263,9 @@ void CommAudio::hostSessionHandler()
 
 	// Set host mode to true
 	mIsHost = true;
+
+	// Set the connection manager to host mode;
+	mConnectionManager.BecomeHost(&mConnections, mSessionKey);
 }
 
 void CommAudio::joinSessionHandler()
@@ -610,14 +604,26 @@ void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 	loadSong(item->text(0));
 }
 
-void CommAudio::newConnectionHandler()
+void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 {
-	QTcpSocket * socket = mServer.nextPendingConnection();
-	QHostAddress address = socket->peerAddress();
+	// Remove the connection if they are trying to connect a second time
+	if (mConnections.contains(name))
+	{
+		qDebug() << name << "-" << socket << "is already connected";
+		socket->close();
+		delete socket;
+	}
 
-	// Connect socket and add connection to map of pending connections
+	// Add the new client to the map of clients
+	mConnections[name] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
-	mPendingConnections[address.toString()] = socket;
+
+	// Add the client to the tree view
+	QStringList client;
+	client << name << "Client";
+	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, client));
+
+	qDebug() << name << "-" << socket << "was accepted successfully";
 }
 
 void CommAudio::incomingDataHandler()
@@ -639,9 +645,12 @@ void CommAudio::parsePacketHost(const QTcpSocket * sender, const QByteArray data
 {
 	QHostAddress address = sender->peerAddress();
 
+	// Host packet logic goes here
 }
 
 void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray data)
 {
 	QHostAddress address = sender->peerAddress();
+
+	// Client packet logic goes here
 }
