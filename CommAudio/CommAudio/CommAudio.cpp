@@ -54,7 +54,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mIsHost(false)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
-	, mPlayer(new QMediaPlayer())
+	, mPlayer(new QMediaPlayer(this, QMediaPlayer::StreamPlayback))
 	, mConnections()
 	, mConnectionManager(this)
 {
@@ -286,7 +286,7 @@ void CommAudio::joinSessionHandler()
 
 	// Create connection
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost("70.79.180.224", 42069);
+	socket->connectToHost("142.232.63.54", 42069);
 	mConnections["Hard Coded Host Name"] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 
