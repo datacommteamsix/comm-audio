@@ -286,7 +286,7 @@ void CommAudio::joinSessionHandler()
 
 	// Create connection
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost("127.0.0.1", 42069);
+	socket->connectToHost("70.79.180.224", 42069);
 	mConnections["Hard Coded Host Name"] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 
@@ -688,7 +688,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	mSessionKey = data.mid(1, 32);
 
 	// Grab the length
-	int length = data.mid(32, 1).toInt();
+	int length = data.mid(33, 1).toInt();
 
 	qDebug() << "Recieved" << length << "clients from host";
 
@@ -698,9 +698,10 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
 	joinRequest.resize(1 + 33);
 
-	// Send connect request to all other clients in the session
-	int offset = 1 + 32 + 4;
 	assert(joinRequest.size() == 1 + 33);
+
+	// Send connect request to all other clients in the session
+	int offset = 1 + 32 + 1;
 
 	for (int i = 0; i < length; i++)
 	{
