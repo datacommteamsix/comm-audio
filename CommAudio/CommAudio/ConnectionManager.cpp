@@ -61,17 +61,24 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 	// Assert the packet header is the correct length
 	assert(packet.size() == 1 + 32 + 1);
 
+	// TODO: Figure out how to put ip address into qbytearray
+
 	// Send list of currently connected clients to the new client
+	QDataStream ds(packet);
 	for (QTcpSocket * connection : *mConnectedClients)
 	{
 		// Do not send the new client it's own ip
 		if (connection->peerAddress() != socket->peerAddress())
 		{
-			packet += connection->peerAddress().toIPv4Address();
+			ds << connection->peerAddress().toIPv4Address();
 		}
 	}
 
-	socket->write(packet);
+	char buffer[1 + 32 + 1 + 36];
+	int length = 1 + 32 + 1 + mConnectedClients->size() * 4;
+	ds.readRawData(buffer, length);
+	
+	socket->write(buffer, length);
 }
 
 void ConnectionManager::newConnectionHandler()

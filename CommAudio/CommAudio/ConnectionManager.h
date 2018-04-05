@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include <QByteArray>
+#include <QDataStream>
 #include <QHostAddress>
 #include <QMap>
 #include <QString>

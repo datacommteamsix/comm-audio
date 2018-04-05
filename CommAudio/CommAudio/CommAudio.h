@@ -6,6 +6,7 @@
 #include <QAction>
 #include <QByteArray>
 #include <QCryptographicHash>
+#include <QDataStream>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
