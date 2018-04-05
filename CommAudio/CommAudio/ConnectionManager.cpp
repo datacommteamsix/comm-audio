@@ -1,10 +1,9 @@
 #include "ConnectionManager.h"
 
-ConnectionManager::ConnectionManager(QMap<QString, QTcpSocket *> * connectedClients, QWidget * parent)
+ConnectionManager::ConnectionManager(QWidget * parent)
 	: mIsHost(false)
 	, mServer(this)
 {
-	startServerListen();
 }
 
 ConnectionManager::~ConnectionManager()
@@ -14,6 +13,12 @@ ConnectionManager::~ConnectionManager()
 		socket->close();
 		delete socket;
 	}
+}
+
+void ConnectionManager::Init(QMap<QString, QTcpSocket *> * connectedClients)
+{
+	mConnectedClients = connectedClients;
+	startServerListen();
 }
 
 void ConnectionManager::BecomeHost(QByteArray key)
@@ -43,7 +48,7 @@ void ConnectionManager::startServerListen()
 
 void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 {
-	QByteArray packet = QByteArray(1 + 32 + 4, 0);
+	QByteArray packet = QByteArray(1 + 32 + 1, 0);
 	packet[0] = (char)Headers::RespondToJoin;
 
 	// Add the session key to the packet
@@ -51,16 +56,10 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 
 	// Add the number of clients to the packet
 	int size = mConnectedClients->size() - 1;
-
-	char bytes[sizeof(int)];
-	memcpy(bytes, &size, sizeof(int));
-	packet.replace(1 + 32, sizeof(int), bytes);
-
-	// Resize the array because QByteArray will chop off trailing 0x00s
-	packet.resize(1 + 32 + 4);
+	packet.replace(1 + 32, 1, QByteArray::number(size));
 
 	// Assert the packet header is the correct length
-	assert(packet.size() == 1 + 32 + 4);
+	assert(packet.size() == 1 + 32 + 1);
 
 	// Send list of currently connected clients to the new client
 	for (QTcpSocket * connection : *mConnectedClients)
