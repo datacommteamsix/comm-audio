@@ -55,8 +55,8 @@ CommAudio::CommAudio(QWidget * parent)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
 	, mPlayer(new QMediaPlayer())
-	, mConnectionManager(this)
 	, mConnections()
+	, mConnectionManager(&mConnections, this)
 {
 	ui.setupUi(this);
 	
@@ -265,7 +265,7 @@ void CommAudio::hostSessionHandler()
 	mIsHost = true;
 
 	// Set the connection manager to host mode;
-	mConnectionManager.BecomeHost(&mConnections, mSessionKey);
+	mConnectionManager.BecomeHost(mSessionKey);
 }
 
 void CommAudio::joinSessionHandler()
@@ -284,7 +284,7 @@ void CommAudio::joinSessionHandler()
 
 	// Send request to host
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost("127.0.0.1", 42069);
+	socket->connectToHost("70.79.180.224", 42069);
 	mConnections["Hard Coded Host Name"] = socket;
 	socket->write(joinRequest);
 

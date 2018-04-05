@@ -19,10 +19,10 @@ class ConnectionManager : public QWidget
 	Q_OBJECT
 
 public:
-	ConnectionManager(QWidget * parent = nullptr);
+	ConnectionManager(QMap<QString, QTcpSocket *> * connectedClients, QWidget * parent = nullptr);
 	~ConnectionManager();
 
-	void BecomeHost(QMap<QString, QTcpSocket *> * connectedClients, QByteArray key);
+	void BecomeHost(QByteArray key);
 	void BecomeClient();
 
 	void AddPendingConnection(const QString address, QTcpSocket * socket);

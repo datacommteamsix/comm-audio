@@ -1,6 +1,6 @@
 #include "ConnectionManager.h"
 
-ConnectionManager::ConnectionManager(QWidget * parent)
+ConnectionManager::ConnectionManager(QMap<QString, QTcpSocket *> * connectedClients, QWidget * parent)
 	: mIsHost(false)
 	, mServer(this)
 {
@@ -16,17 +16,15 @@ ConnectionManager::~ConnectionManager()
 	}
 }
 
-void ConnectionManager::BecomeHost(QMap<QString, QTcpSocket *> * connectedClients, QByteArray key)
+void ConnectionManager::BecomeHost(QByteArray key)
 {
 	mIsHost = true;
-	mConnectedClients = connectedClients;
 	mKey = key;
 }
 
 void ConnectionManager::BecomeClient()
 {
 	mIsHost = false;
-	mConnectedClients = nullptr;
 	mKey = QByteArray();
 }
 
