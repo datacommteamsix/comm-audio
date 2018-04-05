@@ -67,7 +67,7 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 		// Do not send the new client it's own ip
 		if (connection->peerAddress() != socket->peerAddress())
 		{
-			packet += connection->peerAddress().toString();
+			packet += connection->peerAddress().toIPv4Address();
 		}
 	}
 

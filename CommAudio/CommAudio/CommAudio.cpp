@@ -705,9 +705,10 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 
 	for (int i = 0; i < length; i++)
 	{
-		QString address = QString(data.mid(offset, 32));
+		QString address = QHostAddress(data.mid(offset, 4).toUInt()).toString();
 		QTcpSocket * socket = new QTcpSocket(this);
 		socket->connectToHost(address, 42069);
+		qDebug() << "Attempting to connect to" << socket->peerAddress().toString();
 		socket->write(joinRequest);
 	}
 
