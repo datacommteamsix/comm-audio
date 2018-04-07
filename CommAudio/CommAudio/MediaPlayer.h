@@ -19,7 +19,7 @@ public:
 	MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent = nullptr);
 	~MediaPlayer();
 
-	void SetSong(QString filename);
+	void SetSong(QString absoluteFilename);
 
 	void Play();
 	void Pause();
