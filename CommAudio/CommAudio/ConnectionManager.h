@@ -13,7 +13,7 @@
 #include <QTcpSocket>
 #include <QWidget>
 
-#include "Headers.h"
+#include "globals.h"
 
 class ConnectionManager : public QWidget
 {
@@ -27,7 +27,7 @@ public:
 	void BecomeHost(QByteArray key);
 	void BecomeClient();
 
-	void AddPendingConnection(const QString address, QTcpSocket * socket);
+	void AddPendingConnection(const quint32 address, QTcpSocket * socket);
 
 private:
 	bool mIsHost;
@@ -35,10 +35,11 @@ private:
 
 	QTcpServer mServer;
 	QMap<QString, QTcpSocket *> * mConnectedClients;
-	QMap<QString, QTcpSocket *> mPendingConnections;
+	QMap<quint32, QTcpSocket *> mPendingConnections;
 
 	void startServerListen();
 	void sendListOfClients(QTcpSocket * socket);
+	void parseJoinRequest(const QByteArray data, QTcpSocket * socket);
 
 private slots:
 	void newConnectionHandler();

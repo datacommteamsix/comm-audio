@@ -1,4 +1,7 @@
 #pragma once
+
+#define SUPPORTED_FORMATS { "*.wav" }
+
 #include <QByteArray>
 
 enum Headers
@@ -15,7 +18,6 @@ enum Headers
 };
 
 // Following functions from - https://stackoverflow.com/questions/30660127/append-quint16-unsigned-short-to-qbytearray-quickly
-
 inline QByteArray &operator<<(QByteArray &l, quint8 r)
 {
 	l.append(r);
@@ -31,3 +33,4 @@ inline QByteArray &operator<<(QByteArray &l, quint32 r)
 {
 	return l << quint16(r >> 16) << quint16(r);
 }
+// ---------------------------------------------------------------------------------------------------------------------------

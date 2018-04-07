@@ -33,7 +33,7 @@ void ConnectionManager::BecomeClient()
 	mKey = QByteArray();
 }
 
-void ConnectionManager::AddPendingConnection(const QString address, QTcpSocket * socket)
+void ConnectionManager::AddPendingConnection(const quint32 address, QTcpSocket * socket)
 {
 	assert(socket != nullptr);
 	mPendingConnections[address] = socket;
@@ -48,20 +48,17 @@ void ConnectionManager::startServerListen()
 
 void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 {
-	QByteArray packet = QByteArray(1 + 32 + 1, 0);
-	packet[0] = (char)Headers::RespondToJoin;
+	QByteArray packet = QByteArray(1, (char)Headers::RespondToJoin);
 
 	// Add the session key to the packet
-	packet.replace(1, 32, mKey);
+	packet.append(mKey);
 
 	// Add the number of clients to the packet
-	int size = mConnectedClients->size() - 1;
-	packet.replace(1 + 32, 1, QByteArray::number(size));
+	quint32 size = mConnectedClients->size() - 1;
+	packet.append(size);
 
 	// Assert the packet header is the correct length
 	assert(packet.size() == 1 + 32 + 1);
-
-	// TODO: Figure out how to put ip address into qbytearray
 
 	// Send list of currently connected clients to the new client
 	for (QTcpSocket * connection : *mConnectedClients)
@@ -73,7 +70,7 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 		}
 		else
 		{
-			qDebug() << "Sending" << connection->peerAddress().toString() << "would be redudntant ... skipping";
+			qDebug() << "Sending" << connection->peerAddress().toString() << "would be redudntant so skipping";
 		}
 	}
 
@@ -83,7 +80,7 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 void ConnectionManager::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
-	QString address = socket->peerAddress().toString();
+	quint32 address = socket->peerAddress().toIPv4Address();
 
 	connect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
 	mPendingConnections[address] = socket;
@@ -91,8 +88,10 @@ void ConnectionManager::newConnectionHandler()
 
 void ConnectionManager::incomingDataHandler()
 {
-	QString sender = ((QTcpSocket *)QObject::sender())->peerAddress().toString();
+	quint32 sender = ((QTcpSocket *)QObject::sender())->peerAddress().toIPv4Address();
 	QTcpSocket * socket = mPendingConnections.take(sender);
+	assert(socket != nullptr);
+
 	QByteArray data = socket->readAll();
 
 	// Check if incoming data is a valid request to join packet
@@ -102,22 +101,38 @@ void ConnectionManager::incomingDataHandler()
 		return;
 	}
 
-	if (data[0] != (char)Headers::RequestToJoin)
+	switch (data[0])
 	{
-		qDebug() << "Header" << (char)data[0] << "does not match" << (char)Headers::RequestToJoin;
+	case (char)Headers::RequestToJoin:
+		parseJoinRequest(data, socket);
+		break;
+	default:
+		qDebug() << "Invalid header received";
+		break;
 	}
+	
+}
 
+void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * socket)
+{
 	// Grab the name of the client
+	bool isAlreadyConnected = false;
 	QString clientName = QString(data.mid(1));
+	quint32 pendingAddress = socket->peerAddress().toIPv4Address();
 
-	// Reject it if the client is already connected
-	if (mConnectedClients->contains(clientName))
+	for (QTcpSocket * s : *mConnectedClients)
 	{
-		qDebug() << clientName << "-" << "is already connected";
-		socket->close();
-		socket->deleteLater();
+		if (s->peerAddress().toIPv4Address() == pendingAddress)
+		{
+			qDebug() << clientName << "-" << "is already connected";
+			socket->close();
+			socket->deleteLater();
+			isAlreadyConnected = true;
+			break;
+		}
 	}
-	else
+
+	if (!isAlreadyConnected)
 	{
 		emit connectionAccepted(clientName, socket);
 
@@ -126,9 +141,9 @@ void ConnectionManager::incomingDataHandler()
 			// If this is a new client
 			sendListOfClients(socket);
 		}
-
-		// Remove it from list of pending connection and stop listening for its request to connect packet
-		mPendingConnections.remove(socket->peerAddress().toString());
-		disconnect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
 	}
+
+	// Remove it from list of pending connection and stop listening for its request to connect packet
+	mPendingConnections.remove(pendingAddress);
+	disconnect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
 }

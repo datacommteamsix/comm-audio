@@ -30,10 +30,8 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
 
-#include "Headers.h"
 #include "ConnectionManager.h"
-
-#define SUPPORTED_FORMATS { "*.wav", "*.mp3" }
+#include "globals.h"
 
 class CommAudio : public QMainWindow
 {
