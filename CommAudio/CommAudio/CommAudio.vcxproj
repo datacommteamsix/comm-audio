@@ -130,7 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="ConnectionManager.h" />
-    <ClInclude Include="Headers.h" />
+    <ClInclude Include="globals.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
