@@ -54,12 +54,21 @@ CommAudio::CommAudio(QWidget * parent)
 	, mIsHost(false)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
-	, mPlayer(new QMediaPlayer())
 	, mConnections()
-	, mConnectionManager(&mConnections, this)
+	, mConnectionManager(this)
 {
 	ui.setupUi(this);
-	
+
+	QAudioFormat defaultFormat;
+	defaultFormat.setSampleRate(44100);
+	defaultFormat.setSampleSize(16);
+	defaultFormat.setChannelCount(2);
+	defaultFormat.setCodec("audio/pcm");
+	defaultFormat.setByteOrder(QAudioFormat::LittleEndian);
+	defaultFormat.setSampleType(QAudioFormat::UnSignedInt);
+	mPlayer = new QAudioOutput(defaultFormat, this);
+	mPlayer->setNotifyInterval(1000);
+
 	// Setting default folder to home/comm-audio
 	QDir tmp = QDir(QDir::homePath() + "/comm-audio");
 	mSongFolder = tmp;
@@ -71,13 +80,11 @@ CommAudio::CommAudio(QWidget * parent)
 	// Configure the media player
 	mPlayer->setVolume(100);
 	// Set volume
-	connect(ui.sliderVolume, &QSlider::sliderMoved, mPlayer, &QMediaPlayer::setVolume);
+	connect(ui.sliderVolume, &QSlider::sliderMoved, this, &CommAudio::changeVolumeHandler);
 	// Song state changed
-	connect(mPlayer, &QMediaPlayer::stateChanged, this, &CommAudio::songStateChangeHandler);
+	connect(mPlayer, &QAudioOutput::stateChanged, this, &CommAudio::songStateChangeHandler);
 	// Song progress
-	connect(mPlayer, &QMediaPlayer::positionChanged, this, &CommAudio::songProgressHandler);
-	// Song length
-	connect(mPlayer, &QMediaPlayer::durationChanged, this, &CommAudio::songDurationHandler);
+	connect(mPlayer, &QAudioOutput::notify, this, &CommAudio::songProgressHandler);
 
 	// Closing the application
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
@@ -107,6 +114,8 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Networking set up
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
+
+	mConnectionManager.Init(&mConnections);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -205,11 +214,31 @@ void CommAudio::loadSong(const QString songname)
 {
 	// Stop any current song
 	mPlayer->stop();
-	mPlayer->setPosition(0);
+	mPlayer->reset();
 
 	// Set the song
-	mPlayer->setMedia(QUrl::fromLocalFile(mSongFolder.absoluteFilePath(songname)));
+	if (mSong != nullptr)
+	{
+		delete mSong;
+	}
+
+	mSong = new QFile(mSongFolder.absoluteFilePath(songname));
+	mSong->open(QFile::ReadOnly);
 	ui.labelCurrentSong->setText("Currently Playing: " + songname);
+
+	mSong->read((char *)&mHeader, sizeof(mHeader));
+	mSong->seek(0);
+
+	// Change the label
+	qint64 totalSeconds = mHeader.totalLength / mHeader.bytesPerSecond;
+	qint64 seconds = totalSeconds % 60;;
+	qint64 minutes = (totalSeconds - (totalSeconds % 60)) / 60;
+
+	QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
+	ui.labelTotalTime->setText(labelText);
+
+	// Change slider max
+	ui.sliderProgress->setMaximum(totalSeconds);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -282,10 +311,13 @@ void CommAudio::joinSessionHandler()
 
 	assert(joinRequest.size() == 1 + 33);
 
-	// Send request to host
+	// Create connection
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost("70.79.180.224", 42069);
+	socket->connectToHost("142.232.63.54", 42069);
 	mConnections["Hard Coded Host Name"] = socket;
+	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
+
+	// Send data
 	socket->write(joinRequest);
 
 	QStringList host;
@@ -425,12 +457,13 @@ void CommAudio::playSongButtonHandler()
 {
 	switch (mPlayer->state())
 	{
-	case QMediaPlayer::PlayingState:
-		mPlayer->pause();
+	case QAudio::ActiveState:
+		mPlayer->suspend();
 		break;
-	case QMediaPlayer::StoppedState:
-	case QMediaPlayer::PausedState:
-		mPlayer->play();
+		break;
+	case QAudio::StoppedState:
+	case QAudio::SuspendedState:
+		mPlayer->start(mSong);
 		break;
 	default:
 		break;
@@ -472,7 +505,13 @@ void CommAudio::nextSongButtonHandler()
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::seekPositionHandler(int position)
 {
-	mPlayer->setPosition(position);
+	mSong->seek(position * mHeader.bytesPerSecond);
+}
+
+void CommAudio::changeVolumeHandler(int position)
+{
+	double volume = (double)position / (double)100;
+	mPlayer->setVolume(volume);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -498,15 +537,13 @@ void CommAudio::seekPositionHandler(int position)
 --
 -- Elements of the GUI that are tied to the state of the media player will be updated to the new state.
 ----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::songStateChangeHandler(QMediaPlayer::State state)
+void CommAudio::songStateChangeHandler(QAudio::State state)
 {
 	switch (state)
 	{
-	case QMediaPlayer::PlayingState:
+	case QAudio::ActiveState:
 		ui.btnPlaySong->setText("Pause");
 		break;
-	case QMediaPlayer::StoppedState:
-	case QMediaPlayer::PausedState:
 	default:
 		ui.btnPlaySong->setText("Play");
 		break;
@@ -536,61 +573,19 @@ void CommAudio::songStateChangeHandler(QMediaPlayer::State state)
 --
 -- This function will update the GUI elements that are tied to how far along the song is like the slider and time label.
 ----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::songProgressHandler(qint64 ms)
+void CommAudio::songProgressHandler()
 {
-	if (mPlayer->isAudioAvailable())
-	{
-		// Set label text
-		qint64 milliseconds = ms % 1000;
-		qint64 seconds = (ms - milliseconds) / 1000;
-		qint64 minutes = (seconds - (seconds % 60)) / 60;
+	int progress = ui.sliderProgress->value() + 1;
 
-		QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
-		ui.labelCurrentTime->setText(labelText);
+	// Set label text
+	qint64 seconds = progress % 60;
+	qint64 minutes = (progress - (progress % 60)) / 60;
 
-		// Update slider
-		ui.sliderProgress->setValue(ms);
-	}
-}
+	QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
+	ui.labelCurrentTime->setText(labelText);
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::songDurationHandler
---
--- DATE:			March 26, 2018
---
--- REVISIONS:		N/A	
---
--- DESIGNER:		Benny Wang
---					Angus Lam
---					Roger Zhang
---
--- PROGRAMMER:		Benny Wang
---
--- INTERFACE:		CommAudio::songDurationHandler (qint64 ms)
---						qint64 ms: The total length of the song in milliseconds.
---
--- RETURNS:			void.		
---
--- NOTES:
--- This is a Qt slot that is triggered when the total duration of the song changes.
---
--- This function will update the GUI elements that are tied to the total duration of the song like the time label.
-----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::songDurationHandler(qint64 ms)
-{
-	if (mPlayer->isAudioAvailable())
-	{
-		// Change the label
-		qint64 milliseconds = ms % 1000;
-		qint64 seconds = ((ms - milliseconds) / 1000);
-		qint64 minutes = (seconds - (seconds % 60)) / 60;
-
-		QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
-		ui.labelTotalTime->setText(labelText);
-
-		// Change slider max
-		ui.sliderProgress->setMaximum(ms);
-	}
+	// Update slider
+	ui.sliderProgress->setValue(progress);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -683,15 +678,11 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	mSessionKey = data.mid(1, 32);
 
 	// Grab the length
-	int length = -1;
-	QByteArray len = data.mid(32, sizeof(int));
-	memcpy(&length, len.data(), sizeof(int));
+	int length = data.mid(33, 1).toInt();
+
+	qDebug() << "Recieved" << length << "clients from host";
 
 	// Craft connect request
-
-	// Send connect request to all other clients in the session
-	int offset = 1 + 32 + 4;
-
 	QByteArray joinRequest = QByteArray(1 + 33, (char)0);
 	joinRequest[0] = (char)Headers::RequestToJoin;
 	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
@@ -699,12 +690,21 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 
 	assert(joinRequest.size() == 1 + 33);
 
+	// Send connect request to all other clients in the session
+	int offset = 1 + 32 + 1;
+
 	for (int i = 0; i < length; i++)
 	{
-		QString address = QString(data.mid(offset, 32));
+		// TODO: Make sure this is reading address correctly
+		quint32 addressInt = -1;
+		QDataStream(data.mid(offset, 4)) >> addressInt;
+		QString address = QHostAddress(addressInt).toString();
+
+		qDebug() << "Attempting to connect to" << address;
 		QTcpSocket * socket = new QTcpSocket(this);
 		socket->connectToHost(address, 42069);
 		socket->write(joinRequest);
+		offset += 4;
 	}
 
 }

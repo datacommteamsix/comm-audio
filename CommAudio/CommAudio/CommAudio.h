@@ -4,8 +4,11 @@
 #include <QDebug>
 
 #include <QAction>
+#include <QAudioFormat>
+#include <QAudioOutput>
 #include <QByteArray>
 #include <QCryptographicHash>
+#include <QDataStream>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -14,7 +17,6 @@
 #include <QInputDialog>
 #include <QList>
 #include <QMap>
-#include <QMediaPlayer>
 #include <QNetworkInterface>
 #include <QPoint>
 #include <QPushButton>
@@ -29,10 +31,8 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
 
-#include "Headers.h"
 #include "ConnectionManager.h"
-
-#define SUPPORTED_FORMATS { "*.wav", "*.mp3" }
+#include "globals.h"
 
 class CommAudio : public QMainWindow
 {
@@ -50,10 +50,12 @@ private:
 	QString mName;
 	QByteArray mSessionKey;
 
+	WavHeader mHeader;
+	QFile * mSong;
 	QDir mSongFolder;
 	QDir mDownloadFolder;
 
-	QMediaPlayer * mPlayer;
+	QAudioOutput * mPlayer;
 
 	//QTcpServer mServer;
 	ConnectionManager mConnectionManager;
@@ -83,11 +85,12 @@ private slots:
 	void prevSongButtonHandler();
 	void nextSongButtonHandler();
 
+	void changeVolumeHandler(int volume);
+
 	void seekPositionHandler(int position);
 
-	void songStateChangeHandler(QMediaPlayer::State state);
-	void songProgressHandler(qint64 ms);
-	void songDurationHandler(qint64 ms);
+	void songStateChangeHandler(QAudio::State state);
+	void songProgressHandler();
 
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
 
