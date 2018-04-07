@@ -59,15 +59,8 @@ CommAudio::CommAudio(QWidget * parent)
 {
 	ui.setupUi(this);
 
-	QAudioFormat defaultFormat;
-	defaultFormat.setSampleRate(44100);
-	defaultFormat.setSampleSize(16);
-	defaultFormat.setChannelCount(2);
-	defaultFormat.setCodec("audio/pcm");
-	defaultFormat.setByteOrder(QAudioFormat::LittleEndian);
-	defaultFormat.setSampleType(QAudioFormat::UnSignedInt);
-	mPlayer = new QAudioOutput(defaultFormat, this);
-	mPlayer->setNotifyInterval(1000);
+	// Create the Media Player
+	mMediaPlayer = new MediaPlayer(&ui, this);
 
 	// Setting default folder to home/comm-audio
 	QDir tmp = QDir(QDir::homePath() + "/comm-audio");
@@ -76,15 +69,6 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Song Lists
 	connect(ui.treeLocalSongs, &QTreeWidget::itemClicked, this, &CommAudio::localSongClickedHandler);
-
-	// Configure the media player
-	mPlayer->setVolume(100);
-	// Set volume
-	connect(ui.sliderVolume, &QSlider::sliderMoved, this, &CommAudio::changeVolumeHandler);
-	// Song state changed
-	connect(mPlayer, &QAudioOutput::stateChanged, this, &CommAudio::songStateChangeHandler);
-	// Song progress
-	connect(mPlayer, &QAudioOutput::notify, this, &CommAudio::songProgressHandler);
 
 	// Closing the application
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
@@ -103,14 +87,6 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Populate local song list
 	populateLocalSongsList();
-
-	// Audio Control Buttons
-	connect(ui.btnPlaySong, &QPushButton::pressed, this, &CommAudio::playSongButtonHandler);
-	connect(ui.btnPrevSong, &QPushButton::pressed, this, &CommAudio::prevSongButtonHandler);
-	connect(ui.btnNextSong, &QPushButton::pressed, this, &CommAudio::nextSongButtonHandler);
-
-	// Seeking
-	connect(ui.sliderProgress, &QSlider::sliderMoved, this, &CommAudio::seekPositionHandler);
 
 	// Networking set up
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
@@ -147,7 +123,7 @@ CommAudio::~CommAudio()
 		delete socket;
 	}
 
-	delete mPlayer;
+	delete mMediaPlayer;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -187,58 +163,6 @@ void CommAudio::populateLocalSongsList()
 
 	// Add the list of widgets to tree
 	ui.treeLocalSongs->insertTopLevelItems(0, items);
-}
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::loadSong
---
--- DATE:			March 26, 2018
---
--- REVISIONS:		N/A	
---
--- DESIGNER:		Benny Wang
---					Angus Lam
---					Roger Zhang
---
--- PROGRAMMER:		Benny Wang
---
--- INTERFACE:		CommAudio::loadSong (const QString songname)
---						const QString songname: The name of the song.
---
--- RETURNS:			void.		
---
--- NOTES:
--- Loads a song into the media player and prepares it to be played.
-----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::loadSong(const QString songname)
-{
-	// Stop any current song
-	mPlayer->stop();
-	mPlayer->reset();
-
-	// Set the song
-	if (mSong != nullptr)
-	{
-		delete mSong;
-	}
-
-	mSong = new QFile(mSongFolder.absoluteFilePath(songname));
-	mSong->open(QFile::ReadOnly);
-	ui.labelCurrentSong->setText("Currently Playing: " + songname);
-
-	mSong->read((char *)&mHeader, sizeof(mHeader));
-	mSong->seek(0);
-
-	// Change the label
-	qint64 totalSeconds = mHeader.totalLength / mHeader.bytesPerSecond;
-	qint64 seconds = totalSeconds % 60;;
-	qint64 minutes = (totalSeconds - (totalSeconds % 60)) / 60;
-
-	QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
-	ui.labelTotalTime->setText(labelText);
-
-	// Change slider max
-	ui.sliderProgress->setMaximum(totalSeconds);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -432,163 +356,6 @@ void CommAudio::changeDownloadFolderHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::playSongButtonHandler
---
--- DATE:			March 26, 2018
---
--- REVISIONS:		N/A	
---
--- DESIGNER:		Benny Wang
---					Angus Lam
---					Roger Zhang
---
--- PROGRAMMER:		Benny Wang
---
--- INTERFACE:		CommAudio::playSongButtonHandler ()
---
--- RETURNS:			void.		
---
--- NOTES:
--- This is a Qt slot that is triggered when the user pressed the play/pause button.
---
--- The state of the media player is changed based on the current state of the media player.
-----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::playSongButtonHandler()
-{
-	switch (mPlayer->state())
-	{
-	case QAudio::ActiveState:
-		mPlayer->suspend();
-		break;
-		break;
-	case QAudio::StoppedState:
-	case QAudio::SuspendedState:
-		mPlayer->start(mSong);
-		break;
-	default:
-		break;
-	}
-}
-
-void CommAudio::prevSongButtonHandler()
-{
-
-}
-
-void CommAudio::nextSongButtonHandler()
-{
-
-}
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::seekPositionHandler
---
--- DATE:			March 26, 2018
---
--- REVISIONS:		N/A	
---
--- DESIGNER:		Benny Wang
---					Angus Lam
---					Roger Zhang
---
--- PROGRAMMER:		Benny Wang
---
--- INTERFACE:		CommAudio::seekPositionHandler (int position)
---						int position: The new position in the song.
---
--- RETURNS:			void.		
---
--- NOTES:
--- This is a Qt slot that is triggered when the user moves the position slider for the song.
---
--- This function will cause the QMediaPlayer to seek to the new position in the song.
-----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::seekPositionHandler(int position)
-{
-	mSong->seek(position * mHeader.bytesPerSecond);
-}
-
-void CommAudio::changeVolumeHandler(int position)
-{
-	double volume = (double)position / (double)100;
-	mPlayer->setVolume(volume);
-}
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::songStateChangedHandler
---
--- DATE:			March 26, 2018
---
--- REVISIONS:		N/A	
---
--- DESIGNER:		Benny Wang
---					Angus Lam
---					Roger Zhang
---
--- PROGRAMMER:		Benny Wang
---
--- INTERFACE:		CommAudio::songStateChangedHandler (QMediaPLayer::State state)
---						QMediaPlayer::State state: The state of the media player.
---
--- RETURNS:			void.		
---
--- NOTES:
--- This is a Qt slot that is triggered when the state of the media player changes.
---
--- Elements of the GUI that are tied to the state of the media player will be updated to the new state.
-----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::songStateChangeHandler(QAudio::State state)
-{
-	switch (state)
-	{
-	case QAudio::ActiveState:
-		ui.btnPlaySong->setText("Pause");
-		break;
-	default:
-		ui.btnPlaySong->setText("Play");
-		break;
-	}
-}
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::songProgressHandler
---
--- DATE:			March 26, 2018
---
--- REVISIONS:		N/A	
---
--- DESIGNER:		Benny Wang
---					Angus Lam
---					Roger Zhang
---
--- PROGRAMMER:		Benny Wang
---
--- INTERFACE:		CommAudio::songProgressHandler (qint64 ms)
---						qint64 ms: The progress of the song in milliseconds.
---
--- RETURNS:			void.		
---
--- NOTES:
--- This is a Qt slot that is triggered when the position of the song changes.
---
--- This function will update the GUI elements that are tied to how far along the song is like the slider and time label.
-----------------------------------------------------------------------------------------------------------------------*/
-void CommAudio::songProgressHandler()
-{
-	int progress = ui.sliderProgress->value() + 1;
-
-	// Set label text
-	qint64 seconds = progress % 60;
-	qint64 minutes = (progress - (progress % 60)) / 60;
-
-	QString labelText = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds % 60, 2, 10, QChar('0'));
-	ui.labelCurrentTime->setText(labelText);
-
-	// Update slider
-	ui.sliderProgress->setValue(progress);
-}
-
-/*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:		CommAudio::localSongClickedHandler
 --
 -- DATE:			March 26, 2018
@@ -614,7 +381,7 @@ void CommAudio::songProgressHandler()
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 {
-	loadSong(item->text(0));
+	mMediaPlayer->SetSong(mSongFolder.absoluteFilePath(item->text(0)));
 }
 
 void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
