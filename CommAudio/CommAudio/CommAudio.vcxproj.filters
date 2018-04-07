@@ -39,12 +39,18 @@
     <ClCompile Include="ConnectionManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MediaPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="CommAudio.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="ConnectionManager.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="MediaPlayer.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

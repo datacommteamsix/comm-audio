@@ -33,6 +33,7 @@
 
 #include "ConnectionManager.h"
 #include "globals.h"
+#include "MediaPlayer.h"
 
 class CommAudio : public QMainWindow
 {
@@ -50,12 +51,10 @@ private:
 	QString mName;
 	QByteArray mSessionKey;
 
-	WavHeader mHeader;
-	QFile * mSong;
 	QDir mSongFolder;
 	QDir mDownloadFolder;
 
-	QAudioOutput * mPlayer;
+	MediaPlayer * mMediaPlayer;
 
 	//QTcpServer mServer;
 	ConnectionManager mConnectionManager;
@@ -64,7 +63,6 @@ private:
 
 	// Functions
 	void populateLocalSongsList();
-	void loadSong(const QString songname);
 
 	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
 	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
@@ -72,7 +70,7 @@ private:
 	void connectToAllOtherClients(const QByteArray data);
 
 private slots:
-	// UI
+	// Menu Bar 
 	void hostSessionHandler();
 	void joinSessionHandler();
 	void leaveSessionHandler();
@@ -81,17 +79,7 @@ private slots:
 	void changeSongFolderHandler();
 	void changeDownloadFolderHandler();
 
-	void playSongButtonHandler();
-	void prevSongButtonHandler();
-	void nextSongButtonHandler();
-
-	void changeVolumeHandler(int volume);
-
-	void seekPositionHandler(int position);
-
-	void songStateChangeHandler(QAudio::State state);
-	void songProgressHandler();
-
+	// Song Lists
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
 
 	// Networking
