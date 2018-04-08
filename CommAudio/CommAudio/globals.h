@@ -25,6 +25,7 @@ enum Headers
 {
 	RequestToJoin,
 	RespondToJoin,
+	RespondWithName,
 	AcceptJoin,
 	RequestForSongs,
 	RespondWithSongs,

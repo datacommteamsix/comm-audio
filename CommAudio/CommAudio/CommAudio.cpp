@@ -55,7 +55,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
 	, mConnections()
-	, mConnectionManager(this)
+	, mConnectionManager(&mName, this)
 {
 	ui.setupUi(this);
 
@@ -432,6 +432,8 @@ void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray da
 	case Headers::RespondToJoin:
 		connectToAllOtherClients(data);
 		break;
+	case Headers::RespondWithName:
+		displayClientName(data);
 	default:
 		break;
 	}
@@ -469,9 +471,17 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 
 		qDebug() << "Attempting to connect to" << address;
 		QTcpSocket * socket = new QTcpSocket(this);
+		connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 		socket->connectToHost(address, 42069);
 		socket->write(joinRequest);
 		offset += 4;
 	}
 
+}
+
+void CommAudio::displayClientName(const QByteArray data)
+{
+	QStringList otherClient;
+	otherClient << QString(data.mid(1)) << "Client";
+	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
 }
