@@ -1,7 +1,8 @@
 #include "ConnectionManager.h"
 
-ConnectionManager::ConnectionManager(QWidget * parent)
-	: mIsHost(false)
+ConnectionManager::ConnectionManager(QString * name, QWidget * parent)
+	: mName(name)
+	, mIsHost(false)
 	, mServer(this)
 {
 }
@@ -77,6 +78,17 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 	socket->write(packet);
 }
 
+void ConnectionManager::sendName(QTcpSocket * socket)
+{
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::RespondWithName);
+	packet.append(*mName);
+	packet.resize(1 + 33);
+
+	// Send
+	socket->write(packet);
+}
+
 void ConnectionManager::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
@@ -140,6 +152,10 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 		{
 			// If this is a new client
 			sendListOfClients(socket);
+		}
+		else
+		{
+			sendName(socket);
 		}
 	}
 

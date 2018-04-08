@@ -20,7 +20,7 @@ class ConnectionManager : public QWidget
 	Q_OBJECT
 
 public:
-	ConnectionManager(QWidget * parent = nullptr);
+	ConnectionManager(QString * name, QWidget * parent = nullptr);
 	~ConnectionManager();
 
 	void Init(QMap<QString, QTcpSocket *> * connectedClients);
@@ -31,6 +31,7 @@ public:
 
 private:
 	bool mIsHost;
+	QString * mName;
 	QByteArray mKey;
 
 	QTcpServer mServer;
@@ -39,6 +40,7 @@ private:
 
 	void startServerListen();
 	void sendListOfClients(QTcpSocket * socket);
+	void sendName(QTcpSocket * socket);
 	void parseJoinRequest(const QByteArray data, QTcpSocket * socket);
 
 private slots:

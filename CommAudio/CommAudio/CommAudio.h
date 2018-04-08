@@ -68,6 +68,7 @@ private:
 	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
 
 	void connectToAllOtherClients(const QByteArray data);
+	void displayClientName(const QByteArray data);
 
 private slots:
 	// Menu Bar 
