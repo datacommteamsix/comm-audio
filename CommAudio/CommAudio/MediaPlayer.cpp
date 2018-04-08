@@ -110,7 +110,6 @@ int MediaPlayer::GetDuration()
 void MediaPlayer::changeVolumeHandler(int position)
 {
 	double volume = (double)position / (double)100;
-	qDebug() << "Volume sider currently disabled but your volume would be at" << volume;
 	mPlayer->setVolume(volume);
 }
 
