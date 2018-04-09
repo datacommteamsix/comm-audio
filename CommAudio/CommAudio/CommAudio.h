@@ -64,11 +64,15 @@ private:
 	// Functions
 	void populateLocalSongsList();
 
-	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
-	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
+	void parsePacketHost(QTcpSocket * sender, const QByteArray data);
+	void parsePacketClient(QTcpSocket * sender, const QByteArray data);
 
 	void connectToAllOtherClients(const QByteArray data);
 	void displayClientName(const QByteArray data);
+	void displaySongName(const QByteArray data);
+
+	void requestForSongs(QTcpSocket * host);
+	void sendSongList(QTcpSocket * sender);
 
 private slots:
 	// Menu Bar 

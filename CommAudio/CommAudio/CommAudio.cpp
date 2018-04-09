@@ -416,29 +416,59 @@ void CommAudio::incomingDataHandler()
 	}
 }
 
-void CommAudio::parsePacketHost(const QTcpSocket * sender, const QByteArray data)
+void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 {
 	QHostAddress address = sender->peerAddress();
-
+	switch (data[0])
+	{
+	case Headers::RequestForSongs:
+		sendSongList(sender);
+	}
 	// Host packet logic goes here
 }
 
-void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray data)
+void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 {
 	QHostAddress address = sender->peerAddress();
 	
 	switch (data[0])
 	{
 	case Headers::RespondToJoin:
+		requestForSongs(sender);
 		connectToAllOtherClients(data);
 		break;
 	case Headers::RespondWithName:
 		displayClientName(data);
+	case Headers::RespondWithSongs:
+		displaySongName(data);
 	default:
 		break;
 	}
 
 	// Client packet logic goes here
+}
+
+void CommAudio::requestForSongs(QTcpSocket * socket)
+{
+	QTcpSocket *host = socket;
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::RequestForSongs);
+	packet.resize(1 + 33);
+
+	// Send
+	host->write(packet);
+}
+
+void CommAudio::sendSongList(QTcpSocket * socket)
+{
+	QTcpSocket *sender = socket;
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::RespondWithSongs);
+	packet.append("TestSongName");
+	packet.resize(1 + 33);
+
+	// Send
+	sender->write(packet);
 }
 
 void CommAudio::connectToAllOtherClients(const QByteArray data)
@@ -484,4 +514,11 @@ void CommAudio::displayClientName(const QByteArray data)
 	QStringList otherClient;
 	otherClient << QString(data.mid(1)) << "Client";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
+}
+
+void CommAudio::displaySongName(const QByteArray data)
+{
+	QStringList Songlist;
+	Songlist << QString(data.mid(1)) << "Songs";
+	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 }
