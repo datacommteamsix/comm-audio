@@ -475,14 +475,13 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 
 void CommAudio::sendSongList(QTcpSocket * socket)
 {
-	int initSize = 1 + 33 + 4;
+	int initSize = 1 + 32 + 4;
 	int songNameSize = 255;
-	int songSize = items.size();
-	QTcpSocket *sender = socket;
+	quint32 songSize = items.size();
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::RespondWithSongs);
 	packet.append(mSessionKey);
-	packet.append(songSize);
+	packet << songSize;
 
 	for (QTreeWidgetItem * item : items)
 	{
@@ -492,7 +491,7 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 	}
 
 	// Send
-	sender->write(packet);
+	socket->write(packet);
 }
 
 void CommAudio::connectToAllOtherClients(const QByteArray data)
@@ -545,10 +544,20 @@ void CommAudio::displayClientName(const QByteArray data)
 
 void CommAudio::displaySongName(const QByteArray data)
 {
+	quint32 length = -1;
+	QDataStream ds(data.mid(1 + 32, 4));
+	ds >> length;
+	qDebug() << "Number of songs =" << length;
+
 	QStringList Songlist;
-	qDebug() << "Number of songs =" + QString(data.mid(1 + 33, 38));
-	Songlist << QString(data.mid(39, 255));
-	Songlist << QString(data.mid(39 + 255, 255));
-	Songlist << QString(data.mid(39 + 255 + 255, 255));
+	Songlist << QString(data.mid(37, 255)) << "Song";
+	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+
+	Songlist.clear();
+	Songlist << QString(data.mid(37 + 255, 255)) << "Song";
+	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+
+	Songlist.clear();
+	Songlist << QString(data.mid(37 + 255 + 255, 255)) << "Song";
 	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 }
