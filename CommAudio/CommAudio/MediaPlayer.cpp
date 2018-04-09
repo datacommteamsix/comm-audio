@@ -13,7 +13,7 @@ MediaPlayer::MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent)
 	mSongFormat->setChannelCount(2);
 	mSongFormat->setCodec("audio/pcm");
 	mSongFormat->setByteOrder(QAudioFormat::LittleEndian);
-	mSongFormat->setSampleType(QAudioFormat::UnSignedInt);
+	mSongFormat->setSampleType(QAudioFormat::SignedInt);
 
 	mPlayer = new QAudioOutput(*mSongFormat, this);
 	mPlayer->setNotifyInterval(1000);
@@ -117,8 +117,7 @@ int MediaPlayer::GetDuration()
 void MediaPlayer::changeVolumeHandler(int position)
 {
 	double volume = (double)position / (double)100;
-	qDebug() << "Volume sider currently disabled but your volume would be at" << volume;
-	mPlayer->setVolume(1);
+	mPlayer->setVolume(volume);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -245,6 +244,10 @@ void MediaPlayer::songStateChangeHandler(QAudio::State state)
 	{
 	case QAudio::ActiveState:
 		ui->btnPlaySong->setText("Pause");
+		break;
+	case QAudio::IdleState:
+		SetSong(mSong->fileName());
+		Play();
 		break;
 	default:
 		ui->btnPlaySong->setText("Play");

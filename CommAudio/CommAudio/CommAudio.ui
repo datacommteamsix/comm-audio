@@ -188,7 +188,7 @@
      <item>
       <widget class="QSlider" name="sliderVolume">
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
         <number>100</number>

@@ -55,7 +55,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
 	, mConnections()
-	, mConnectionManager(this)
+	, mConnectionManager(&mName, this)
 {
 	ui.setupUi(this);
 
@@ -237,7 +237,7 @@ void CommAudio::joinSessionHandler()
 
 	// Create connection
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost("142.232.63.54", 42069);
+	socket->connectToHost("192.168.0.18", 42069);
 	mConnections["Hard Coded Host Name"] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 
@@ -433,6 +433,8 @@ void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray da
 	case Headers::RespondToJoin:
 		connectToAllOtherClients(data);
 		break;
+	case Headers::RespondWithName:
+		displayClientName(data);
 	default:
 		break;
 	}
@@ -446,7 +448,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	mSessionKey = data.mid(1, 32);
 
 	// Grab the length
-	int length = data.mid(33, 1).toInt();
+	int length = (int)data[33];
 
 	qDebug() << "Recieved" << length << "clients from host";
 
@@ -470,9 +472,17 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 
 		qDebug() << "Attempting to connect to" << address;
 		QTcpSocket * socket = new QTcpSocket(this);
+		connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 		socket->connectToHost(address, 42069);
 		socket->write(joinRequest);
 		offset += 4;
 	}
 
+}
+
+void CommAudio::displayClientName(const QByteArray data)
+{
+	QStringList otherClient;
+	otherClient << QString(data.mid(1)) << "Client";
+	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
 }
