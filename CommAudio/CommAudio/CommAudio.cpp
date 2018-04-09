@@ -257,6 +257,11 @@ void CommAudio::leaveSessionHandler()
 	// Send notice of leave to all connected members
 
 	// Disconnect from all memebers
+	for (QTcpSocket * socket : mConnections)
+	{
+		socket->close();
+		delete socket;
+	}
 
 	//clear the treeUsers
 	ui.treeUsers->clear();
