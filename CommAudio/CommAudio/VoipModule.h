@@ -19,10 +19,10 @@ public:
 
 private:
 	QAudioFormat mFormat;
-	QAudioInput mInput;
 
 	QTcpServer mServer;
 	QMap<quint32, QTcpSocket *> mConnections;
+	QMap<quint32, QAudioInput *> mInputs;
 	QMap<quint32, QAudioOutput *> mOutputs;
 
 private slots:
