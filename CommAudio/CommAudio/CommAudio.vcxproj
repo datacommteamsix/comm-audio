@@ -119,6 +119,7 @@
     <ClCompile Include="ConnectionManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MediaPlayer.cpp" />
+    <ClCompile Include="VoipModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="CommAudio.h" />
@@ -130,6 +131,7 @@
     <QtRcc Include="CommAudio.qrc" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="VoipModule.h" />
     <QtMoc Include="MediaPlayer.h" />
     <QtMoc Include="ConnectionManager.h" />
     <ClInclude Include="globals.h" />

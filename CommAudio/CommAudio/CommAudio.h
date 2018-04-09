@@ -90,6 +90,6 @@ private slots:
 	void incomingDataHandler();
 
 signals:
-	void newClient(QTcpSocket * socket);
+	void connectVoip(QHostAddress address);
 
 };
