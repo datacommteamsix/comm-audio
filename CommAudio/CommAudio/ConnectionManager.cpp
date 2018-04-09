@@ -151,7 +151,8 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 #include "ConnectionManager.h"
 
 ConnectionManager::ConnectionManager(QString * name, QWidget * parent)
-	: mName(name)
+	: QWidget(parent)
+	, mName(name)
 	, mIsHost(false)
 	, mServer(this)
 {

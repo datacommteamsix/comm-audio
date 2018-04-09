@@ -56,6 +56,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mSessionKey()
 	, mConnections()
 	, mConnectionManager(&mName, this)
+	, mVoip(this)
 {
 	ui.setupUi(this);
 
@@ -90,6 +91,9 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Networking set up
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
+
+	// Connect signal for VoIP module
+	connect(this, &CommAudio::newClient, &mVoip, &VoipModule::newClientHandler);
 
 	mConnectionManager.Init(&mConnections);
 }
