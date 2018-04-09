@@ -6,6 +6,7 @@
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QFile>
+#include <QDir>
 #include <QWidget>
 
 #include "globals.h"
@@ -19,7 +20,9 @@ public:
 	MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent = nullptr);
 	~MediaPlayer();
 
-	void SetSong(QString absoluteFilename);
+	void SetSong(QString absoluteFileName);
+	void SetDirAndSong(QDir songDir, QTreeWidgetItem *currSong);
+	void updateSongList(QList<QTreeWidgetItem *> songList);
 
 	void Play();
 	void Pause();
@@ -35,8 +38,11 @@ private:
 	WavHeader * mSongHeader;
 	QAudioFormat * mSongFormat;
 	QFile * mSong;
+	QTreeWidgetItem * mCurrentSong = NULL;
 
 	QAudioOutput * mPlayer;
+	QList<QTreeWidgetItem *> songList;
+	QDir mCurrentDir = NULL;
 
 private slots:
 	void playSongButtonHandler();
