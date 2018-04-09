@@ -251,13 +251,15 @@ void CommAudio::joinSessionHandler()
 
 void CommAudio::leaveSessionHandler()
 {
-	mIsHost = false;
+	//If you are a host
 	mConnectionManager.BecomeClient();
-	mSessionKey = QByteArray();
 
 	// Send notice of leave to all connected members
 
 	// Disconnect from all memebers
+
+	//clear the treeUsers
+	ui.treeUsers->clear();
 }
 
 /*------------------------------------------------------------------------------------------------------------------

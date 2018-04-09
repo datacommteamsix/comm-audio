@@ -39,6 +39,8 @@ void ConnectionManager::AddPendingConnection(const quint32 address, QTcpSocket *
 	assert(socket != nullptr);
 	mPendingConnections[address] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
+	connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
+		[=](QAbstractSocket::SocketError socketError) { qDebug() << "host has disconnected"; });
 }
 
 void ConnectionManager::startServerListen()
@@ -123,6 +125,11 @@ void ConnectionManager::incomingDataHandler()
 		break;
 	}
 	
+}
+
+void ConnectionManager::errorHandler()
+{
+
 }
 
 void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * socket)
