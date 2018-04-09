@@ -71,11 +71,14 @@ private:
 
 	void connectToAllOtherClients(const QByteArray data);
 	void displayClientName(const QByteArray data);
-	void displaySongName(const QByteArray data);
+	void displaySongName(const QByteArray data, QTcpSocket * sender);
 
 	void requestForSongs(QTcpSocket * host);
 	void sendSongList(QTcpSocket * sender);
 	void returnSongList(QTcpSocket * sender);
+	void requestToDownload(QTcpSocket * sender, QString songname);
+	void uploadSong(QTcpSocket * sender, const QByteArray data);
+	void downloadSong(QByteArray data);
 
 private slots:
 	// Menu Bar 
@@ -89,6 +92,7 @@ private slots:
 
 	// Song Lists
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
+	void remoteSongClickedHandler(QTreeWidgetItem * item, int column);
 
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);
