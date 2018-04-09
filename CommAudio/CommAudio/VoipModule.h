@@ -15,7 +15,7 @@ class VoipModule : public QWidget
 
 public:
 	VoipModule(QWidget * parent = nullptr);
-	~VoipModule() = default;
+	~VoipModule();
 
 private:
 	QAudioFormat mFormat;
