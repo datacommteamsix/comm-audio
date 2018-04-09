@@ -436,6 +436,10 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 	{
 	case Headers::RequestForSongs:
 		sendSongList(sender);
+	case Headers::RespondWithSongs:
+		displaySongName(data);
+	case Headers::ReturnWithSongs:
+		displaySongName(data);
 	}
 	// Host packet logic goes here
 }
@@ -452,7 +456,13 @@ void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 		break;
 	case Headers::RespondWithName:
 		displayClientName(data);
+		requestForSongs(sender);
+	case Headers::RequestForSongs:
+		sendSongList(sender);
 	case Headers::RespondWithSongs:
+		displaySongName(data);
+		returnSongList(sender);
+	case Headers::ReturnWithSongs:
 		displaySongName(data);
 	default:
 		break;
@@ -471,6 +481,27 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 
 	// Send
 	host->write(packet);
+}
+
+void CommAudio::returnSongList(QTcpSocket * socket)
+{
+	int initSize = 1 + 32 + 4;
+	int songNameSize = 255;
+	quint32 songSize = items.size();
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::ReturnWithSongs);
+	packet.append(mSessionKey);
+	packet << songSize;
+
+	for (QTreeWidgetItem * item : items)
+	{
+		packet.append((item->text(0)).toUtf8());
+		initSize += songNameSize;
+		packet.resize(initSize);
+	}
+
+	// Send
+	socket->write(packet);
 }
 
 void CommAudio::sendSongList(QTcpSocket * socket)
@@ -545,19 +576,28 @@ void CommAudio::displayClientName(const QByteArray data)
 void CommAudio::displaySongName(const QByteArray data)
 {
 	quint32 length = -1;
-	QDataStream ds(data.mid(1 + 32, 4));
-	ds >> length;
+	QDataStream(data.mid(1 + 32, 4)) >> length;
 	qDebug() << "Number of songs =" << length;
 
+	int offset = 37;
 	QStringList Songlist;
-	Songlist << QString(data.mid(37, 255)) << "Song";
-	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+	for (quint32 i = 0; i < length; i++)
+	{
+		Songlist << QString(data.mid(offset, 255)) << "Song";
+		offset += 255;
+		ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+		Songlist.clear();
+	}
 
-	Songlist.clear();
-	Songlist << QString(data.mid(37 + 255, 255)) << "Song";
-	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+	//QStringList Songlist;
+	//Songlist << QString(data.mid(37, 255)) << "Song";
+	//ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 
-	Songlist.clear();
-	Songlist << QString(data.mid(37 + 255 + 255, 255)) << "Song";
-	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+	//Songlist.clear();
+	//Songlist << QString(data.mid(37 + 255, 255)) << "Song";
+	//ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+
+	//Songlist.clear();
+	//Songlist << QString(data.mid(37 + 255 + 255, 255)) << "Song";
+	//ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 }

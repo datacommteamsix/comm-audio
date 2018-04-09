@@ -75,6 +75,7 @@ private:
 
 	void requestForSongs(QTcpSocket * host);
 	void sendSongList(QTcpSocket * sender);
+	void returnSongList(QTcpSocket * sender);
 
 private slots:
 	// Menu Bar 

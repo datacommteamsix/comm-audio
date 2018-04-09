@@ -30,6 +30,7 @@ enum Headers
 	AcceptJoin,
 	RequestForSongs,
 	RespondWithSongs,
+	ReturnWithSongs,
 	RequestAudioStream,
 	RequestDownload,
 	RequestUpload,
