@@ -42,10 +42,12 @@ void VoipModule::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
 	quint32 address = socket->peerAddress().toIPv4Address();
+	connect(socket, &QTcpSocket::readyRead, this, &VoipModule::incomingDataHandler);
 
 	mConnections[address] = socket;
 	mInputs[address] = new QAudioInput(mFormat, this);
 	mInputs[address]->start(socket);
+
 	qDebug() << "inputs" << mInputs.size() << "outputs" << mOutputs.size() << "connections" << mConnections.size();
 }
 
