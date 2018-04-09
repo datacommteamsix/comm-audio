@@ -486,6 +486,8 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 		displaySongName(data, sender);
 	case Headers::RequestDownload:
 		uploadSong(sender, data);
+	case Headers::RespondDownload:
+		downloadSong(data);
 	}
 	// Host packet logic goes here
 }
