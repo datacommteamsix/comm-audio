@@ -53,6 +53,7 @@ private:
 
 	QDir mSongFolder;
 	QDir mDownloadFolder;
+	QList<QTreeWidgetItem *> items;
 
 	MediaPlayer * mMediaPlayer;
 

@@ -155,7 +155,6 @@ void CommAudio::populateLocalSongsList()
 		QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
 
 	// Create a list of widgets
-	QList<QTreeWidgetItem *> items;
 	for (QString song : songs)
 	{
 		items.append(new QTreeWidgetItem(ui.treeLocalSongs, QStringList(song)));
@@ -163,6 +162,7 @@ void CommAudio::populateLocalSongsList()
 
 	// Add the list of widgets to tree
 	ui.treeLocalSongs->insertTopLevelItems(0, items);
+	mMediaPlayer->updateSongList(items);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -381,6 +381,7 @@ void CommAudio::changeDownloadFolderHandler()
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 {
+	mMediaPlayer->SetDirAndSong(mSongFolder, item);
 	mMediaPlayer->SetSong(mSongFolder.absoluteFilePath(item->text(0)));
 }
 

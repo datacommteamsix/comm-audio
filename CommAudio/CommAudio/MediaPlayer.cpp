@@ -43,6 +43,13 @@ MediaPlayer::~MediaPlayer()
 	delete mSong;
 }
 
+// Roger
+void MediaPlayer::SetDirAndSong(QDir songDir, QTreeWidgetItem *currSong)
+{
+	mCurrentDir = songDir;
+	mCurrentSong = currSong;
+}
+
 void MediaPlayer::SetSong(QString absoluteFilename)
 {
 	Stop();
@@ -152,14 +159,32 @@ void MediaPlayer::playSongButtonHandler()
 	}
 }
 
+//Roger
 void MediaPlayer::prevSongButtonHandler()
 {
-
+	int index = songList.indexOf(mCurrentSong);
+	index -= 1;
+	if (index < 0) { index = 0; }
+	mCurrentSong = songList[index];
+	SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
+	Play();
 }
 
+//Roger
 void MediaPlayer::nextSongButtonHandler()
 {
+	int index = songList.indexOf(mCurrentSong);
+	index += 1;
+	if (index > songList.size() - 1) { index = songList.size() - 1; }
+	mCurrentSong = songList[index];
+	SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
+	Play();
+}
 
+//Roger
+void MediaPlayer::updateSongList(QList<QTreeWidgetItem *> items)
+{
+	songList = items;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
