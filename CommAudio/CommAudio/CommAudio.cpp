@@ -241,7 +241,7 @@ void CommAudio::joinSessionHandler()
 
 	// Create connection
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost("192.168.0.18", 42069);
+	socket->connectToHost(TEST_HOST_IP, 42069);
 	mConnections["Hard Coded Host Name"] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 
@@ -252,7 +252,7 @@ void CommAudio::joinSessionHandler()
 	host << "Hard Coded Host Name" << "Host";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
-	emit connectVoip(QHostAddress("192.168.0.18"));
+	emit connectVoip(QHostAddress(TEST_HOST_IP));
 }
 
 void CommAudio::leaveSessionHandler()
