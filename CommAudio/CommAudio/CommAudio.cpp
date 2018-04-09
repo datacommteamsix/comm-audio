@@ -163,6 +163,12 @@ void CommAudio::populateLocalSongsList()
 	// Add the list of widgets to tree
 	ui.treeLocalSongs->insertTopLevelItems(0, items);
 	mMediaPlayer->updateSongList(items);
+
+	// Testing Roger
+	for (QTreeWidgetItem * item : items)
+	{
+		qDebug() << item->text(0);
+	}
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -454,6 +460,7 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 	QTcpSocket *host = socket;
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::RequestForSongs);
+	packet.append(mSessionKey);
 	packet.resize(1 + 33);
 
 	// Send
@@ -462,11 +469,17 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 
 void CommAudio::sendSongList(QTcpSocket * socket)
 {
+	//QByteArray mSongName = new QByteArray[255];
 	QTcpSocket *sender = socket;
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::RespondWithSongs);
-	packet.append("TestSongName");
-	packet.resize(1 + 33);
+	packet.append(mSessionKey);
+	for (QTreeWidgetItem * item : items)
+	{
+		mSongName = (item->text(0)).toUtf8();
+		qDebug() << item->text(0);
+	}
+	packet.resize(1 + 33 + 4 + 255);
 
 	// Send
 	sender->write(packet);
