@@ -547,8 +547,8 @@ void CommAudio::displaySongName(const QByteArray data)
 {
 	QStringList Songlist;
 	qDebug() << "Number of songs =" + QString(data.mid(1 + 33, 38));
-	Songlist << QString(data.mid(39 + 255));
-	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
-	Songlist << QString(data.mid(39 + 255 + 255));
+	Songlist << QString(data.mid(39, 255));
+	Songlist << QString(data.mid(39 + 255, 255));
+	Songlist << QString(data.mid(39 + 255 + 255, 255));
 	ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 }
