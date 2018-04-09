@@ -46,6 +46,7 @@ void VoipModule::newConnectionHandler()
 	mConnections[address] = socket;
 	mInputs[address] = new QAudioInput(mFormat, this);
 	mInputs[address]->start(socket);
+	qDebug() << "inputs" << mInputs.size() << "outputs" << mOutputs.size() << "connections" << mConnections.size();
 }
 
 void VoipModule::incomingDataHandler()
@@ -57,6 +58,7 @@ void VoipModule::incomingDataHandler()
 	{
 		mOutputs[address] = new QAudioOutput(mFormat, this);
 		mOutputs[address]->start(mConnections[address]);
+		qDebug() << "inputs" << mInputs.size() << "outputs" << mOutputs.size() << "connections" << mConnections.size();
 	}
 }
 
@@ -69,4 +71,5 @@ void VoipModule::newClientHandler(QHostAddress address)
 	mConnections[address.toIPv4Address()] = socket;
 	mInputs[address.toIPv4Address()] = new QAudioInput(mFormat, this);
 	mInputs[address.toIPv4Address()]->start(socket);
+	qDebug() << "inputs" << mInputs.size() << "outputs" << mOutputs.size() << "connections" << mConnections.size();
 }
