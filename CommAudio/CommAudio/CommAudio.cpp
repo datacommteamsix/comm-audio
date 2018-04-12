@@ -55,6 +55,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
 	, mConnections()
+	, mIpToHostnames()
 	, mConnectionManager(&mName, this)
 {
 	ui.setupUi(this);
@@ -91,7 +92,7 @@ CommAudio::CommAudio(QWidget * parent)
 	// Networking set up
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
 
-	mConnectionManager.Init(&mConnections);
+	mConnectionManager.Init(&mConnections, &mIpToHostnames);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -240,6 +241,7 @@ void CommAudio::joinSessionHandler()
 	socket->connectToHost("192.168.0.18", 42069);
 	mConnections["Hard Coded Host Name"] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
+	connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
 	// Send data
 	socket->write(joinRequest);
@@ -479,12 +481,29 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 		qDebug() << "Attempting to connect to" << address;
 		QTcpSocket * socket = new QTcpSocket(this);
 		connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
+		connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
+
 		socket->connectToHost(address, 42069);
 		socket->write(joinRequest);
 		offset += 4;
 	}
 
 }
+
+//This is to handle a disconnect from a client requesting the leave session and to this client
+void CommAudio::remoteDisconnectHandler()
+{
+	//Get the socket that sent the signal
+	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
+
+	//Delete from connection map
+	quint32 address = sender->peerAddress().toIPv4Address();
+	//check values if it contains sender
+	qDebug() << address;
+	//Delete from user list
+}
+
+
 
 void CommAudio::displayClientName(const QByteArray data)
 {

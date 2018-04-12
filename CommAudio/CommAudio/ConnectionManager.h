@@ -23,7 +23,7 @@ public:
 	ConnectionManager(QString * name, QWidget * parent = nullptr);
 	~ConnectionManager();
 
-	void Init(QMap<QString, QTcpSocket *> * connectedClients);
+	void Init(QMap<QString, QTcpSocket *> * connectedClients, QMap<quint32, QString> * ipToHostname);
 	void BecomeHost(QByteArray key);
 	void BecomeClient();
 
@@ -37,6 +37,7 @@ private:
 	QTcpServer mServer;
 	QMap<QString, QTcpSocket *> * mConnectedClients;
 	QMap<quint32, QTcpSocket *> mPendingConnections;
+	QMap<quint32, QString> * mIptoHost;
 
 	void startServerListen();
 
@@ -45,6 +46,7 @@ private:
 	void parseJoinRequest(const QByteArray data, QTcpSocket * socket);
 
 private slots:
+	void remoteDisconnectHandler();
 	void newConnectionHandler();
 	void incomingDataHandler();
 	void errorHandler();

@@ -60,6 +60,7 @@ private:
 	ConnectionManager mConnectionManager;
 
 	QMap<QString, QTcpSocket *> mConnections;
+	QMap<quint32, QString> mIpToHostnames;
 
 	// Functions
 	void populateLocalSongsList();
@@ -86,4 +87,5 @@ private slots:
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);
 	void incomingDataHandler();
+	void remoteDisconnectHandler();
 };
