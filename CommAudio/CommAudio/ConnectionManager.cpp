@@ -17,10 +17,9 @@ ConnectionManager::~ConnectionManager()
 	}
 }
 
-void ConnectionManager::Init(QMap<QString, QTcpSocket *> * connectedClients, QMap<quint32, QString> * ipToHostname)
+void ConnectionManager::Init(QMap<QString, QTcpSocket *> * connectedClients)
 {
 	mConnectedClients = connectedClients;
-	mIptoHost = ipToHostname;
 	startServerListen();
 }
 
@@ -98,27 +97,7 @@ void ConnectionManager::newConnectionHandler()
 
 	connect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
 
-	//Can either handle it as an error or as a disconnect signal, will test both
-
-	//connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
-		//[=](QAbstractSocket::SocketError socketError) { qDebug() << "host has disconnected"; });
-
-	connect(socket, &QTcpSocket::disconnected, this, &ConnectionManager::remoteDisconnectHandler);
-
 	mPendingConnections[address] = socket;
-}
-
-//This is for the disconnect between a client requesting to leave session and the server
-void ConnectionManager::remoteDisconnectHandler()
-{
-	//Get the socket that sent the signal
-	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
-
-	//Delete from connection map
-	QHostAddress address = sender->peerAddress();
-	//check values if it contains sender
-	qDebug() << address;
-	//Delete from user list
 }
 
 void ConnectionManager::incomingDataHandler()
@@ -159,8 +138,6 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 	bool isAlreadyConnected = false;
 	QString clientName = QString(data.mid(1));
 	quint32 pendingAddress = socket->peerAddress().toIPv4Address();
-
-	mIptoHost->insert(pendingAddress, clientName);
 
 	for (QTcpSocket * s : *mConnectedClients)
 	{
