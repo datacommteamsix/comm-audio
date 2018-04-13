@@ -34,6 +34,7 @@
 #include "ConnectionManager.h"
 #include "globals.h"
 #include "MediaPlayer.h"
+#include "VoipModule.h"
 
 class CommAudio : public QMainWindow
 {
@@ -53,14 +54,14 @@ private:
 
 	QDir mSongFolder;
 	QDir mDownloadFolder;
-
-	MediaPlayer * mMediaPlayer;
-
-	//QTcpServer mServer;
-	ConnectionManager mConnectionManager;
+	QList<QTreeWidgetItem *> items;
 
 	QMap<QString, QTcpSocket *> mConnections;
-	QMap<quint32, QString> mIpToHostnames;
+	QMap<quint32, QString> mIpToName;
+	// Components
+	ConnectionManager mConnectionManager;
+	VoipModule mVoip;
+	MediaPlayer * mMediaPlayer;
 
 	// Functions
 	void populateLocalSongsList();
@@ -88,4 +89,9 @@ private slots:
 	void newConnectionHandler(QString name, QTcpSocket * socket);
 	void incomingDataHandler();
 	void remoteDisconnectHandler();
+
+signals:
+	void connectVoip(QHostAddress address);
+
+
 };

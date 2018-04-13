@@ -4,15 +4,16 @@
 
 TEMPLATE = app
 TARGET = CommAudio
-DESTDIR = ../x64/Release
+DESTDIR = ../x64/Debug
 QT += core network gui multimedia widgets
-CONFIG += release
+CONFIG += debug
 DEFINES += _UNICODE WIN64 QT_MULTIMEDIA_LIB QT_NETWORK_LIB QT_WIDGETS_LIB
 INCLUDEPATH += ./GeneratedFiles \
     . \
     ./GeneratedFiles/$(ConfigurationName)
 DEPENDPATH += .
 MOC_DIR += ./GeneratedFiles/$(ConfigurationName)
-OBJECTS_DIR += release
+OBJECTS_DIR += debug
 UI_DIR += ./GeneratedFiles
 RCC_DIR += ./GeneratedFiles
+include(CommAudio.pri)
