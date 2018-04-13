@@ -96,7 +96,6 @@ void ConnectionManager::newConnectionHandler()
 	quint32 address = socket->peerAddress().toIPv4Address();
 
 	connect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
-
 	mPendingConnections[address] = socket;
 }
 
@@ -125,11 +124,6 @@ void ConnectionManager::incomingDataHandler()
 		break;
 	}
 	
-}
-
-void ConnectionManager::errorHandler()
-{
-	qDebug() << "It should come here";
 }
 
 void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * socket)

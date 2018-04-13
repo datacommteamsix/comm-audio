@@ -39,7 +39,6 @@ private:
 	QMap<quint32, QTcpSocket *> mPendingConnections;
 
 	void startServerListen();
-
 	void sendListOfClients(QTcpSocket * socket);
 	void sendName(QTcpSocket * socket);
 	void parseJoinRequest(const QByteArray data, QTcpSocket * socket);
@@ -47,7 +46,6 @@ private:
 private slots:
 	void newConnectionHandler();
 	void incomingDataHandler();
-	void errorHandler();
 
 signals:
 	void connectionAccepted(QString, QTcpSocket *);

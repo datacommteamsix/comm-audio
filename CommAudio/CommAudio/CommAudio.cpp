@@ -533,6 +533,5 @@ void CommAudio::displayClientName(const QByteArray data)
 {
 	QStringList otherClient;
 	otherClient << QString(data.mid(1)) << "Client";
-
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
 }

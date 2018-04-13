@@ -92,6 +92,4 @@ private slots:
 
 signals:
 	void connectVoip(QHostAddress address);
-
-
 };
