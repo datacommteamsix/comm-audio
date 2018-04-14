@@ -72,6 +72,8 @@ private:
 	void connectToAllOtherClients(const QByteArray data);
 	void displayClientName(const QByteArray data);
 
+
+	void DEBUG();
 private slots:
 	// Menu Bar 
 	void hostSessionHandler();

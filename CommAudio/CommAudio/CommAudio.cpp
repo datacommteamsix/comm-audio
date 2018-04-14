@@ -125,7 +125,6 @@ CommAudio::~CommAudio()
 	for (QTcpSocket * socket : mConnections)
 	{
 		socket->close();
-		delete socket;
 	}
 
 	delete mMediaPlayer;
@@ -224,6 +223,8 @@ void CommAudio::hostSessionHandler()
 
 	// Set the connection manager to host mode;
 	mConnectionManager.BecomeHost(mSessionKey);
+
+	DEBUG();
 }
 
 void CommAudio::joinSessionHandler()
@@ -244,6 +245,7 @@ void CommAudio::joinSessionHandler()
 	QTcpSocket * socket = new QTcpSocket(this);
 	socket->connectToHost(TEST_HOST_IP, 42069);
 	mConnections["Hard Coded Host Name"] = socket;
+	mIpToName[QHostAddress(TEST_HOST_IP).toIPv4Address()] = "Hard Coded Host Name";
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
@@ -255,6 +257,8 @@ void CommAudio::joinSessionHandler()
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
 	//emit connectVoip(QHostAddress(TEST_HOST_IP));
+
+	DEBUG();
 }
 
 void CommAudio::leaveSessionHandler()
@@ -267,12 +271,18 @@ void CommAudio::leaveSessionHandler()
 	// Disconnect from all memebers
 	for (QTcpSocket * socket : mConnections)
 	{
+		disconnect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 		socket->close();
-		delete socket;
+		socket->deleteLater();
 	}
+
+	mConnections.clear();
+	mIpToName.clear();
 
 	//clear the treeUsers
 	ui.treeUsers->clear();
+	
+	DEBUG();
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -419,6 +429,8 @@ void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, client));
 
 	qDebug() << name << "-" << socket << "was accepted successfully";
+
+	DEBUG();
 }
 
 void CommAudio::incomingDataHandler()
@@ -502,6 +514,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 		offset += 4;
 	}
 
+	DEBUG();
 }
 
 //This is to handle a disconnect from a client requesting the leave session and to this client
@@ -529,6 +542,7 @@ void CommAudio::remoteDisconnectHandler()
 	mIpToName.remove(address);
 	//delete the socket
 	sender->deleteLater();
+	DEBUG();
 }
 
 void CommAudio::displayClientName(const QByteArray data)
@@ -536,4 +550,9 @@ void CommAudio::displayClientName(const QByteArray data)
 	QStringList otherClient;
 	otherClient << QString(data.mid(1)) << "Client";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
+}
+
+void CommAudio::DEBUG()
+{
+	qDebug() << "mConnection size:" << mConnections.size() << ", mIpToName size:" << mIpToName.size();
 }
