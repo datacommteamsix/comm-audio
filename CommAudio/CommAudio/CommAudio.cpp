@@ -57,7 +57,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mConnections()
 	, mIpToName()
 	, mConnectionManager(&mName, this)
-	, mVoip(this)
+	//, mVoip(this)
 {
 	ui.setupUi(this);
 
@@ -94,7 +94,7 @@ CommAudio::CommAudio(QWidget * parent)
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
 
 	// Connect signal for VoIP module
-	connect(this, &CommAudio::connectVoip, &mVoip, &VoipModule::newClientHandler);
+	//connect(this, &CommAudio::connectVoip, &mVoip, &VoipModule::newClientHandler);
 
 	mConnectionManager.Init(&mConnections);
 }
@@ -254,7 +254,7 @@ void CommAudio::joinSessionHandler()
 	host << "Hard Coded Host Name" << "Host";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
-	emit connectVoip(QHostAddress(TEST_HOST_IP));
+	//emit connectVoip(QHostAddress(TEST_HOST_IP));
 }
 
 void CommAudio::leaveSessionHandler()
@@ -490,7 +490,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 		QHostAddress qHostAddress = QHostAddress(addressInt);
 		QString address = qHostAddress.toString();
 
-		emit connectVoip(qHostAddress);
+		//emit connectVoip(qHostAddress);
 
 		qDebug() << "Attempting to connect to" << address;
 		QTcpSocket * socket = new QTcpSocket(this);
