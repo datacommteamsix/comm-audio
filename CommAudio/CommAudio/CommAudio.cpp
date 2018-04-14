@@ -288,6 +288,7 @@ void CommAudio::leaveSessionHandler()
 
 	//clear the treeUsers
 	ui.treeUsers->clear();
+	ui.treeRemoteSongs->clear();
 	
 	DEBUG();
 }
