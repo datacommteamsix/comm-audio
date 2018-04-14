@@ -79,6 +79,8 @@ private:
 	void requestToDownload(QTcpSocket * sender, QString songname);
 	void uploadSong(QTcpSocket * sender, const QByteArray data);
 	void downloadSong(QByteArray data);
+	void startStreamingSong(QTcpSocket * sender, const QByteArray data);
+	void playStreamSong(const QByteArray Data);
 
 private slots:
 	// Menu Bar 

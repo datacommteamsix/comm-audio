@@ -1,6 +1,6 @@
 #pragma once
 
-#define TEST_HOST_IP "127.0.0.1"
+#define TEST_HOST_IP "192.168.0.13"
 #define SUPPORTED_FORMATS { "*.wav" }
 
 #include <QByteArray>
@@ -32,6 +32,7 @@ enum Headers
 	RespondWithSongs,
 	ReturnWithSongs,
 	RequestAudioStream,
+	RespondAudioStream,
 	RequestDownload,
 	RespondDownload,
 	RequestUpload,

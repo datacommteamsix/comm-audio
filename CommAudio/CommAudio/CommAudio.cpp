@@ -480,14 +480,16 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 	{
 	case Headers::RequestForSongs:
 		sendSongList(sender);
-	case Headers::RespondWithSongs:
-		displaySongName(data, sender);
+	//case Headers::RespondWithSongs:
+	//	displaySongName(data, sender);
 	case Headers::ReturnWithSongs:
 		displaySongName(data, sender);
 	case Headers::RequestDownload:
 		uploadSong(sender, data);
 	case Headers::RespondDownload:
 		downloadSong(data);
+	case Headers::RequestAudioStream:
+		startStreamingSong(sender, data);
 	}
 	// Host packet logic goes here
 }
@@ -516,11 +518,24 @@ void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 		uploadSong(sender, data);
 	case Headers::RespondDownload:
 		downloadSong(data);
+	case Headers::RespondAudioStream:
+		playStreamSong(data);
 	default:
 		break;
 	}
 
 	// Client packet logic goes here
+}
+
+void CommAudio::startStreamingSong(QTcpSocket * sender, const QByteArray data)
+{
+	QByteArray packet = QByteArray(1, (char)Headers::RespondAudioStream);
+	//packet.append(mSessionKey);
+	//packet.resize(1 + 32);
+}
+
+void CommAudio::playStreamSong(const QByteArray Data)
+{
 }
 
 void CommAudio::downloadSong(QByteArray packet)
@@ -535,14 +550,13 @@ void CommAudio::downloadSong(QByteArray packet)
 
 void CommAudio::requestForSongs(QTcpSocket * socket)
 {
-	QTcpSocket *host = socket;
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::RequestForSongs);
 	packet.append(mSessionKey);
 	packet.resize(1 + 33);
 
 	// Send
-	host->write(packet);
+	socket->write(packet);
 }
 
 void CommAudio::returnSongList(QTcpSocket * socket)
