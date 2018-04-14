@@ -57,7 +57,7 @@ private:
 	QList<QTreeWidgetItem *> items;
 
 	QMap<QString, QTcpSocket *> mConnections;
-
+	QMap<quint32, QString> mIpToName;
 	// Components
 	ConnectionManager mConnectionManager;
 	VoipModule mVoip;
@@ -88,8 +88,8 @@ private slots:
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);
 	void incomingDataHandler();
+	void remoteDisconnectHandler();
 
 signals:
 	void connectVoip(QHostAddress address);
-
 };
