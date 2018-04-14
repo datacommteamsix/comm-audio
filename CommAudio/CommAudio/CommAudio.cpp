@@ -515,19 +515,21 @@ void CommAudio::remoteDisconnectHandler()
 	//Get the name of the client using the dictionary converter
 	QString clientName = mIpToName[address];
 
-	//Search for the name of the client
-	QList<QTreeWidgetItem *> theClient = ui.treeUsers->findItems(clientName, Qt::MatchContains, 0);
-	//Delete from user list
-	ui.treeUsers->removeItemWidget(theClient[0], 0);
-	ui.treeUsers->removeItemWidget(theClient[0], 1);
+	for (int i = 0; i < mConnections.size(); i++)
+	{
+		if (ui.treeUsers->topLevelItem(i)->text(0) == clientName)
+		{
+			delete ui.treeUsers->takeTopLevelItem(i);
+			break;
+		}
+	}
 
 	//Delete client from connections
 	mConnections.remove(clientName);
+	mIpToName.remove(address);
 	//delete the socket
 	sender->deleteLater();
 }
-
-
 
 void CommAudio::displayClientName(const QByteArray data)
 {
