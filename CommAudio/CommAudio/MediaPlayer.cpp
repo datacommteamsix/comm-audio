@@ -164,7 +164,7 @@ void MediaPlayer::prevSongButtonHandler()
 {
 	int index = songList.indexOf(mCurrentSong);
 	index -= 1;
-	if (index < 0) { index = 0; }
+	if (index < 0) { index = songList.size() - 1; }
 	mCurrentSong = songList[index];
 	SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
 	Play();
@@ -175,7 +175,7 @@ void MediaPlayer::nextSongButtonHandler()
 {
 	int index = songList.indexOf(mCurrentSong);
 	index += 1;
-	if (index > songList.size() - 1) { index = songList.size() - 1; }
+	if (index > songList.size() - 1) { index = 0; }
 	mCurrentSong = songList[index];
 	SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
 	Play();
