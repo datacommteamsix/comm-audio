@@ -70,7 +70,7 @@ private:
 	void parsePacketClient(QTcpSocket * sender, const QByteArray data);
 
 	void connectToAllOtherClients(const QByteArray data);
-	void displayClientName(const QByteArray data);
+	void displayClientName(const QByteArray data, QTcpSocket * sender);
 	void displaySongName(const QByteArray data, QTcpSocket * sender);
 
 	void requestForSongs(QTcpSocket * host);
