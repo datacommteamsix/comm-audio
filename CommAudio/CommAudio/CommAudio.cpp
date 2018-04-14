@@ -419,9 +419,9 @@ void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 
 void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
 {
-	QList <QTcpSocket *> list = mConnections.values(item->text(1));
-	qDebug() << "should send it to: " << list[0];
-	requestToDownload(list[0], item->text(0));
+	QTcpSocket * socket = mConnections[item->text(1)];
+	QString songName = item->text(0);
+	requestToDownload(socket, songName);
 }
 
 void CommAudio::requestToDownload(QTcpSocket * sender, QString songname)
