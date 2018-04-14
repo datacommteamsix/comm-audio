@@ -55,6 +55,7 @@ private:
 	QDir mSongFolder;
 	QDir mDownloadFolder;
 	QList<QTreeWidgetItem *> items;
+	QMap<QString, QList<QTreeWidgetItem*>*>* mOwnerToSong;
 
 	QMap<QString, QTcpSocket *> mConnections;
 	QMap<quint32, QString> mIpToName;
@@ -66,11 +67,21 @@ private:
 	// Functions
 	void populateLocalSongsList();
 
-	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
-	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
+	void parsePacketHost(QTcpSocket * sender, const QByteArray data);
+	void parsePacketClient(QTcpSocket * sender, const QByteArray data);
 
 	void connectToAllOtherClients(const QByteArray data);
-	void displayClientName(const QByteArray data);
+	void displayClientName(const QByteArray data, QTcpSocket * sender);
+	void displaySongName(const QByteArray data, QTcpSocket * sender);
+
+	void requestForSongs(QTcpSocket * host);
+	void sendSongList(QTcpSocket * sender);
+	void returnSongList(QTcpSocket * sender);
+	void requestToDownload(QTcpSocket * sender, QString songname);
+	void uploadSong(QTcpSocket * sender, const QByteArray data);
+	void downloadSong(QByteArray data);
+	void startStreamingSong(QTcpSocket * sender, const QByteArray data);
+	void playStreamSong(const QByteArray Data);
 
 
 	void DEBUG();
@@ -86,6 +97,7 @@ private slots:
 
 	// Song Lists
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
+	void remoteSongClickedHandler(QTreeWidgetItem * item, int column);
 
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);

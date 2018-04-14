@@ -63,6 +63,7 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Create the Media Player
 	mMediaPlayer = new MediaPlayer(&ui, this);
+	mOwnerToSong = new QMap<QString, QList<QTreeWidgetItem*>*>();
 
 	// Setting default folder to home/comm-audio
 	QDir tmp = QDir(QDir::homePath() + "/comm-audio");
@@ -71,6 +72,7 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Song Lists
 	connect(ui.treeLocalSongs, &QTreeWidget::itemClicked, this, &CommAudio::localSongClickedHandler);
+	connect(ui.treeRemoteSongs, &QTreeWidget::itemClicked, this, &CommAudio::remoteSongClickedHandler);
 
 	// Closing the application
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
@@ -167,6 +169,12 @@ void CommAudio::populateLocalSongsList()
 	// Add the list of widgets to tree
 	ui.treeLocalSongs->insertTopLevelItems(0, items);
 	mMediaPlayer->updateSongList(items);
+
+	// Testing Roger
+	for (QTreeWidgetItem * item : items)
+	{
+		qDebug() << item->text(0);
+	}
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -281,6 +289,7 @@ void CommAudio::leaveSessionHandler()
 
 	//clear the treeUsers
 	ui.treeUsers->clear();
+	ui.treeRemoteSongs->clear();
 	
 	DEBUG();
 }
@@ -410,6 +419,49 @@ void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 	mMediaPlayer->SetSong(mSongFolder.absoluteFilePath(item->text(0)));
 }
 
+void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
+{
+	QTcpSocket * socket = mConnections[item->text(1)];
+	QString songName = item->text(0);
+	requestToDownload(socket, songName);
+}
+
+void CommAudio::requestToDownload(QTcpSocket * sender, QString songname)
+{
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::RequestDownload);
+	packet.append(mSessionKey);
+	packet.append(songname);
+	packet.resize(1 + 32 + 255);
+
+	// Send
+	sender->write(packet);
+}
+
+void CommAudio::uploadSong(QTcpSocket * sender, const QByteArray data)
+{
+	QString songname = QString(data.mid(1 + 32));
+	qDebug() << "Requested song is: " << songname;
+
+	QByteArray packet = QByteArray(1, (char)Headers::RespondDownload);
+
+	QFile * mSongFile;
+	mSongFile = new QFile(mSongFolder.absoluteFilePath(songname));
+	mSongFile->open(QFile::ReadOnly);
+	packet.append(mSessionKey);
+	packet.append(mSongFile->readAll());
+	sender->write(packet);
+	//QByteArray block;
+	//while (block.size() != 0)
+	//{
+	//	block = mSongFile->read(255);
+
+	//	sender->write(block);
+	//	sender->flush();
+	//}
+	mSongFile->close();
+}
+
 void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 {
 	assert(socket != nullptr);
@@ -448,29 +500,142 @@ void CommAudio::incomingDataHandler()
 	}
 }
 
-void CommAudio::parsePacketHost(const QTcpSocket * sender, const QByteArray data)
+void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 {
 	QHostAddress address = sender->peerAddress();
-
+	switch (data[0])
+	{
+	case Headers::RequestForSongs:
+		sendSongList(sender);
+		break;
+	case Headers::ReturnWithSongs:
+		displaySongName(data, sender);
+		break;
+	case Headers::RequestDownload:
+		uploadSong(sender, data);
+		break;
+	case Headers::RespondDownload:
+		downloadSong(data);
+		break;
+	case Headers::RequestAudioStream:
+		startStreamingSong(sender, data);
+		break;
+	}
 	// Host packet logic goes here
 }
 
-void CommAudio::parsePacketClient(const QTcpSocket * sender, const QByteArray data)
+void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 {
 	qDebug() << sender->peerAddress();
 	
 	switch (data[0])
 	{
 	case Headers::RespondToJoin:
+		requestForSongs(sender);
 		connectToAllOtherClients(data);
 		break;
 	case Headers::RespondWithName:
-		displayClientName(data);
+		displayClientName(data, sender);
+		requestForSongs(sender);
+		break;
+	case Headers::RequestForSongs:
+		sendSongList(sender);
+		break;
+	case Headers::RespondWithSongs:
+		displaySongName(data, sender);
+		returnSongList(sender);
+		break;
+	case Headers::ReturnWithSongs:
+		displaySongName(data, sender);
+		break;
+	case Headers::RequestDownload:
+		uploadSong(sender, data);
+		break;
+	case Headers::RespondDownload:
+		downloadSong(data);
+		break;
+	case Headers::RespondAudioStream:
+		playStreamSong(data);
+		break;
 	default:
 		break;
 	}
 
 	// Client packet logic goes here
+}
+
+void CommAudio::startStreamingSong(QTcpSocket * sender, const QByteArray data)
+{
+	QByteArray packet = QByteArray(1, (char)Headers::RespondAudioStream);
+	//packet.append(mSessionKey);
+	//packet.resize(1 + 32);
+}
+
+void CommAudio::playStreamSong(const QByteArray Data)
+{
+}
+
+void CommAudio::downloadSong(QByteArray packet)
+{
+	QByteArray data = packet.mid(33);
+	// read ...
+	QFile file("D:\\Downloads\\test.wav"); // change path
+	file.open(QIODevice::WriteOnly);
+	file.write(data);
+	file.close();
+}
+
+void CommAudio::requestForSongs(QTcpSocket * socket)
+{
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::RequestForSongs);
+	packet.append(mSessionKey);
+	packet.resize(1 + 33);
+
+	// Send
+	socket->write(packet);
+}
+
+void CommAudio::returnSongList(QTcpSocket * socket)
+{
+	int initSize = 1 + 32 + 4;
+	int songNameSize = 255;
+	quint32 songSize = items.size();
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::ReturnWithSongs);
+	packet.append(mSessionKey);
+	packet << songSize;
+
+	for (QTreeWidgetItem * item : items)
+	{
+		packet.append((item->text(0)).toUtf8());
+		initSize += songNameSize;
+		packet.resize(initSize);
+	}
+
+	// Send
+	socket->write(packet);
+}
+
+void CommAudio::sendSongList(QTcpSocket * socket)
+{
+	int initSize = 1 + 32 + 4;
+	int songNameSize = 255;
+	quint32 songSize = items.size();
+	// Create packet
+	QByteArray packet = QByteArray(1, (char)Headers::RespondWithSongs);
+	packet.append(mSessionKey);
+	packet << songSize;
+
+	for (QTreeWidgetItem * item : items)
+	{
+		packet.append((item->text(0)).toUtf8());
+		initSize += songNameSize;
+		packet.resize(initSize);
+	}
+
+	// Send
+	socket->write(packet);
 }
 
 void CommAudio::connectToAllOtherClients(const QByteArray data)
@@ -540,16 +705,59 @@ void CommAudio::remoteDisconnectHandler()
 	//Delete client from connections
 	mConnections.remove(clientName);
 	mIpToName.remove(address);
+
+	//Delete the client songs
+	QList<QTreeWidgetItem*>* items = mOwnerToSong->value(clientName, NULL);
+
+	for (int i = 0; i < items->length(); i++)
+	{
+		delete items->value(i);
+	}
+
 	//delete the socket
 	sender->deleteLater();
 	DEBUG();
 }
 
-void CommAudio::displayClientName(const QByteArray data)
+void CommAudio::displayClientName(const QByteArray data, QTcpSocket * socket)
 {
+	quint32 address = socket->peerAddress().toIPv4Address();
+	mIpToName[address] = QString(data.mid(1));
 	QStringList otherClient;
-	otherClient << QString(data.mid(1)) << "Client";
+	otherClient << mIpToName[address] << "Client";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
+}
+
+void CommAudio::displaySongName(const QByteArray data, QTcpSocket * sender)
+{
+	quint32 length = -1;
+	QDataStream(data.mid(1 + 32, 4)) >> length;
+	qDebug() << "Number of songs =" << length;
+
+	int offset = 37;
+	QStringList songList;
+
+	QString clientName = mIpToName[sender->peerAddress().toIPv4Address()];
+	qDebug() << "Client name:" << clientName;
+
+	//If the peer doesn't have any previous entries in the mOwnerToSong
+	//then create a new QList for the owner
+	if (!mOwnerToSong->contains(clientName))
+	{
+		mOwnerToSong->insert(clientName, new QList<QTreeWidgetItem*>());
+	}
+
+	for (quint32 i = 0; i < length; i++)
+	{
+		songList << QString(data.mid(offset, 255)) << clientName;
+		offset += 255;
+
+		//Append song and the widget item to the owner to song map
+		mOwnerToSong->value(clientName, NULL)->append(new QTreeWidgetItem(ui.treeRemoteSongs, songList));
+
+		ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, songList));
+		songList.clear();
+	}
 }
 
 void CommAudio::DEBUG()
