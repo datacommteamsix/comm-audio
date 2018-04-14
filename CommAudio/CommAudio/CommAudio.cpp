@@ -508,8 +508,6 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 	case Headers::RequestForSongs:
 		sendSongList(sender);
 		break;
-	//case Headers::RespondWithSongs:
-	//	displaySongName(data, sender);
 	case Headers::ReturnWithSongs:
 		displaySongName(data, sender);
 		break;
@@ -581,7 +579,7 @@ void CommAudio::downloadSong(QByteArray packet)
 {
 	QByteArray data = packet.mid(33);
 	// read ...
-	QFile file("D:\Downloads\test.wav"); // change path
+	QFile file("D:\\Downloads\\test.wav"); // change path
 	file.open(QIODevice::WriteOnly);
 	file.write(data);
 	file.close();
