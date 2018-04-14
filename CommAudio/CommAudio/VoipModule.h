@@ -28,6 +28,7 @@ private:
 private slots:
 	void newConnectionHandler();
 	void incomingDataHandler();
+	void clientDisconnectHandler();
 
 public slots:
 	void newClientHandler(QHostAddress address);

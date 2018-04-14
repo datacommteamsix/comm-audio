@@ -55,8 +55,9 @@ CommAudio::CommAudio(QWidget * parent)
 	, mName(QHostInfo::localHostName())
 	, mSessionKey()
 	, mConnections()
+	, mIpToName()
 	, mConnectionManager(&mName, this)
-	, mVoip(this)
+	//, mVoip(this)
 {
 	ui.setupUi(this);
 
@@ -94,7 +95,7 @@ CommAudio::CommAudio(QWidget * parent)
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
 
 	// Connect signal for VoIP module
-	connect(this, &CommAudio::connectVoip, &mVoip, &VoipModule::newClientHandler);
+	//connect(this, &CommAudio::connectVoip, &mVoip, &VoipModule::newClientHandler);
 
 	mConnectionManager.Init(&mConnections);
 }
@@ -125,7 +126,6 @@ CommAudio::~CommAudio()
 	for (QTcpSocket * socket : mConnections)
 	{
 		socket->close();
-		delete socket;
 	}
 
 	delete mMediaPlayer;
@@ -230,6 +230,8 @@ void CommAudio::hostSessionHandler()
 
 	// Set the connection manager to host mode;
 	mConnectionManager.BecomeHost(mSessionKey);
+
+	DEBUG();
 }
 
 void CommAudio::joinSessionHandler()
@@ -250,7 +252,9 @@ void CommAudio::joinSessionHandler()
 	QTcpSocket * socket = new QTcpSocket(this);
 	socket->connectToHost(TEST_HOST_IP, 42069);
 	mConnections["Hard Coded Host Name"] = socket;
+	mIpToName[QHostAddress(TEST_HOST_IP).toIPv4Address()] = "Hard Coded Host Name";
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
+	connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
 	// Send data
 	socket->write(joinRequest);
@@ -259,18 +263,33 @@ void CommAudio::joinSessionHandler()
 	host << "Hard Coded Host Name" << "Host";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
-	emit connectVoip(QHostAddress(TEST_HOST_IP));
+	//emit connectVoip(QHostAddress(TEST_HOST_IP));
+
+	DEBUG();
 }
 
 void CommAudio::leaveSessionHandler()
 {
-	mIsHost = false;
+	//If you are a host
 	mConnectionManager.BecomeClient();
-	mSessionKey = QByteArray();
 
 	// Send notice of leave to all connected members
 
 	// Disconnect from all memebers
+	for (QTcpSocket * socket : mConnections)
+	{
+		disconnect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
+		socket->close();
+		socket->deleteLater();
+	}
+
+	mConnections.clear();
+	mIpToName.clear();
+
+	//clear the treeUsers
+	ui.treeUsers->clear();
+	
+	DEBUG();
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -446,9 +465,13 @@ void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 	assert(socket != nullptr);
 	assert(!mConnections.contains(name));
 
+	//Insert name and ip to map
+	mIpToName.insert(socket->peerAddress().toIPv4Address(), name);
+
 	// Add the new client to the map of clients
 	mConnections[name] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
+	connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
 	// Add the client to the tree view
 	QStringList client;
@@ -456,6 +479,8 @@ void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, client));
 
 	qDebug() << name << "-" << socket << "was accepted successfully";
+
+	DEBUG();
 }
 
 void CommAudio::incomingDataHandler()
@@ -496,7 +521,7 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 
 void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 {
-	QHostAddress address = sender->peerAddress();
+	qDebug() << sender->peerAddress();
 	
 	switch (data[0])
 	{
@@ -630,16 +655,47 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 		QHostAddress qHostAddress = QHostAddress(addressInt);
 		QString address = qHostAddress.toString();
 
-		emit connectVoip(qHostAddress);
+		//emit connectVoip(qHostAddress);
 
 		qDebug() << "Attempting to connect to" << address;
 		QTcpSocket * socket = new QTcpSocket(this);
 		connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
+		connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
+
 		socket->connectToHost(address, 42069);
 		socket->write(joinRequest);
 		offset += 4;
 	}
 
+	DEBUG();
+}
+
+//This is to handle a disconnect from a client requesting the leave session and to this client
+void CommAudio::remoteDisconnectHandler()
+{
+	//Get the socket that sent the signal
+	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
+
+	//Get the peer address as quint32
+	quint32 address = sender->peerAddress().toIPv4Address();
+	//Get the name of the client using the dictionary converter
+	QString clientName = mIpToName[address];
+
+	for (int i = 0; i < mConnections.size(); i++)
+	{
+		if (ui.treeUsers->topLevelItem(i)->text(0) == clientName)
+		{
+			delete ui.treeUsers->takeTopLevelItem(i);
+			break;
+		}
+	}
+
+	//Delete client from connections
+	mConnections.remove(clientName);
+	mIpToName.remove(address);
+	//delete the socket
+	sender->deleteLater();
+	DEBUG();
 }
 
 void CommAudio::displayClientName(const QByteArray data)
@@ -669,16 +725,9 @@ void CommAudio::displaySongName(const QByteArray data, QTcpSocket * sender)
 		ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 		Songlist.clear();
 	}
+}
 
-	//QStringList Songlist;
-	//Songlist << QString(data.mid(37, 255)) << "Song";
-	//ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
-
-	//Songlist.clear();
-	//Songlist << QString(data.mid(37 + 255, 255)) << "Song";
-	//ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
-
-	//Songlist.clear();
-	//Songlist << QString(data.mid(37 + 255 + 255, 255)) << "Song";
-	//ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+void CommAudio::DEBUG()
+{
+	qDebug() << "mConnection size:" << mConnections.size() << ", mIpToName size:" << mIpToName.size();
 }

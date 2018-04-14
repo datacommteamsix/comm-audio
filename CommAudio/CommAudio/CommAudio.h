@@ -57,7 +57,7 @@ private:
 	QList<QTreeWidgetItem *> items;
 
 	QMap<QString, QTcpSocket *> mConnections;
-
+	QMap<quint32, QString> mIpToName;
 	// Components
 	ConnectionManager mConnectionManager;
 	VoipModule mVoip;
@@ -82,6 +82,8 @@ private:
 	void startStreamingSong(QTcpSocket * sender, const QByteArray data);
 	void playStreamSong(const QByteArray Data);
 
+
+	void DEBUG();
 private slots:
 	// Menu Bar 
 	void hostSessionHandler();
@@ -99,8 +101,8 @@ private slots:
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);
 	void incomingDataHandler();
+	void remoteDisconnectHandler();
 
 signals:
 	void connectVoip(QHostAddress address);
-
 };
