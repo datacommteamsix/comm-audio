@@ -55,6 +55,7 @@ private:
 	QDir mSongFolder;
 	QDir mDownloadFolder;
 	QList<QTreeWidgetItem *> items;
+	QMap<QString, QList<QTreeWidgetItem*>*>* mOwnerToSong;
 
 	QMap<QString, QTcpSocket *> mConnections;
 	QMap<quint32, QString> mIpToName;

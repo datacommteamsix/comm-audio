@@ -63,6 +63,7 @@ CommAudio::CommAudio(QWidget * parent)
 
 	// Create the Media Player
 	mMediaPlayer = new MediaPlayer(&ui, this);
+	mOwnerToSong = new QMap<QString, QList<QTreeWidgetItem*>*>();
 
 	// Setting default folder to home/comm-audio
 	QDir tmp = QDir(QDir::homePath() + "/comm-audio");
@@ -693,6 +694,15 @@ void CommAudio::remoteDisconnectHandler()
 	//Delete client from connections
 	mConnections.remove(clientName);
 	mIpToName.remove(address);
+
+	//Delete the client songs
+	QList<QTreeWidgetItem*>* items = mOwnerToSong->value(clientName, NULL);
+
+	for (int i = 0; i < items->length(); i++)
+	{
+		delete items->value(i);
+	}
+
 	//delete the socket
 	sender->deleteLater();
 	DEBUG();
@@ -718,10 +728,21 @@ void CommAudio::displaySongName(const QByteArray data, QTcpSocket * sender)
 	QList <QString> list = mConnections.keys(sender);
 	clientName = list[0];
 
+	//If the peer doesn't have any previous entries in the mOwnerToSong
+	//then create a new QList for the owner
+	if (!mOwnerToSong->contains(clientName))
+	{
+		mOwnerToSong->insert(clientName, new QList<QTreeWidgetItem*>());
+	}
+
 	for (quint32 i = 0; i < length; i++)
 	{
 		Songlist << QString(data.mid(offset, 255)) << clientName;
 		offset += 255;
+
+		//Append song and the widget item to the owner to song map
+		mOwnerToSong->value(clientName, NULL)->append(new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
+
 		ui.treeRemoteSongs->insertTopLevelItem(ui.treeRemoteSongs->topLevelItemCount(), new QTreeWidgetItem(ui.treeRemoteSongs, Songlist));
 		Songlist.clear();
 	}
