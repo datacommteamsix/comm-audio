@@ -84,8 +84,6 @@ private:
 	void startStreamingSong(QTcpSocket * sender, const QByteArray data);
 	void playStreamSong(const QByteArray Data);
 
-
-	void DEBUG();
 private slots:
 	// Menu Bar 
 	void hostSessionHandler();
@@ -99,6 +97,7 @@ private slots:
 	// Song Lists
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
 	void remoteSongClickedHandler(QTreeWidgetItem * item, int column);
+	void remoteSongDoubleClickedHandler(QTreeWidgetItem * item, int column);
 
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);
