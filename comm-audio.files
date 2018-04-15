@@ -1,0 +1,12 @@
+CommAudio/CommAudio/CommAudio.cpp
+CommAudio/CommAudio/CommAudio.h
+CommAudio/CommAudio/ConnectionManager.cpp
+CommAudio/CommAudio/ConnectionManager.h
+CommAudio/CommAudio/DownloadManager.cpp
+CommAudio/CommAudio/DownloadManager.h
+CommAudio/CommAudio/MediaPlayer.cpp
+CommAudio/CommAudio/MediaPlayer.h
+CommAudio/CommAudio/VoipModule.cpp
+CommAudio/CommAudio/VoipModule.h
+CommAudio/CommAudio/globals.h
+CommAudio/CommAudio/main.cpp
