@@ -6,7 +6,6 @@ DownloadManager::DownloadManager(const QByteArray * key, QDir * source, QDir * d
 	, mSource(source)
 	, mDownloads(downloads)
 	, mServer(this)
-	, i(0)
 {
 	connect(&mServer, &QTcpServer::newConnection, this, &DownloadManager::newConnectionHandler);
 	mServer.listen(QHostAddress::AnyIPv4, 42071);
@@ -30,9 +29,7 @@ void DownloadManager::DownloadFile(QString songName, quint32 address)
 	request.resize(1 + 32 + 255);
 
 	socket->write(request);
-	i = 0;
 
-	// Start the timer
 	SocketTimer * timer = new SocketTimer(this);
 	connect(timer, &QTimer::timeout, this, &DownloadManager::timeoutHandler);
 
@@ -74,32 +71,26 @@ void DownloadManager::incomingDataHandler()
 
 void DownloadManager::uploadSong(QByteArray data, QTcpSocket * socket)
 {
-	i = 0;
 	quint32 address = socket->peerAddress().toIPv4Address();
 
 	QFile file(mSource->absoluteFilePath(data.mid(32)));
 	file.open(QFile::ReadOnly);
 
-	qDebug() << "Starting to write file";
 	while (!file.atEnd())
 	{
 		QByteArray packet = QByteArray(file.read(8192));
 		socket->write(packet);
-		qDebug() << ++i;
 	}
-	qDebug() << "Finished writing file";
 
 	file.close();
 }
 
 void DownloadManager::writeToFile(QByteArray data, quint32 address)
 {
-	// Extend timer
 	mTimers[address]->stop();
 	mTimers[address]->start(5 * 1000);
 
 	mFiles[address]->write(data);
-	qDebug() << ++i;
 }
 
 void DownloadManager::disconnectHandler()
@@ -121,9 +112,7 @@ void DownloadManager::timeoutHandler()
 	SocketTimer * expiredTimer = (SocketTimer *)QObject::sender();
 	quint32 address = expiredTimer->address;
 
-	// Clean up timer
 	mTimers.take(address)->deleteLater();
 
-	// Close connection
 	mConnections.take(address)->close();
 }
