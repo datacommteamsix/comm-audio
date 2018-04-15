@@ -27,6 +27,8 @@ private:
 
 	QTcpServer mServer;
 
+	int i;
+
 	void uploadSong(QByteArray data, QTcpSocket * socket);
 	void writeToFile(QByteArray data, quint32 address);
 

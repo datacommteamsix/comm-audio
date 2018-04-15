@@ -6,6 +6,7 @@ DownloadManager::DownloadManager(const QByteArray * key, QDir * source, QDir * d
 	, mSource(source)
 	, mDownloads(downloads)
 	, mServer(this)
+	, i(0)
 {
 	connect(&mServer, &QTcpServer::newConnection, this, &DownloadManager::newConnectionHandler);
 	mServer.listen(QHostAddress::AnyIPv4, 42071);
@@ -36,7 +37,6 @@ void DownloadManager::newConnectionHandler()
 	QTcpSocket * socket = mServer.nextPendingConnection();
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	socket->setSocketOption(QTcpSocket::ReceiveBufferSizeSocketOption, QVariant(8193));
 	mConnections[address] = socket;
 
 	connect(socket, &QTcpSocket::readyRead, this, &DownloadManager::incomingDataHandler);
@@ -47,16 +47,18 @@ void DownloadManager::incomingDataHandler()
 {
 	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
 	quint32 address = socket->peerAddress().toIPv4Address();
-	QByteArray data = socket->read(1);
+	QByteArray data = socket->read(8192);
 
-	switch (data[0])
+	if (mFiles.contains[address])
 	{
-	case (char)Headers::RequestDownload:
-		uploadSong(socket->read(32 + 255), socket);
-		break;
-	default:
-		writeToFile(socket->read(8192), address);
-		break;
+		writeToFile(data, address);
+	}
+	else
+	{
+		if (data[0] == (char)Headers::RequestDownload)
+		{
+			uploadSong(socket->read(32 + 255), socket);
+		}
 	}
 }
 
@@ -70,8 +72,9 @@ void DownloadManager::uploadSong(QByteArray data, QTcpSocket * socket)
 	qDebug() << "Starting to write file";
 	while (!file.atEnd())
 	{
-		QByteArray packet = QByteArray(1, (char)Headers::RespondDownload).append(file.read(8192));
+		QByteArray packet = QByteArray(file.read(8192));
 		socket->write(packet);
+		qDebug() << ++i;
 	}
 	qDebug() << "Finished writing file";
 
