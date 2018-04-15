@@ -35,6 +35,7 @@
 #include "globals.h"
 #include "MediaPlayer.h"
 #include "VoipModule.h"
+#include "DownloadManager.h"
 
 class CommAudio : public QMainWindow
 {
@@ -64,6 +65,7 @@ private:
 	ConnectionManager mConnectionManager;
 	VoipModule mVoip;
 	MediaPlayer * mMediaPlayer;
+	DownloadManager mDownloadManager;
 
 	// Functions
 	void populateLocalSongsList();
@@ -78,9 +80,6 @@ private:
 	void requestForSongs(QTcpSocket * host);
 	void sendSongList(QTcpSocket * sender);
 	void returnSongList(QTcpSocket * sender);
-	void requestToDownload(QTcpSocket * sender, QString songname);
-	void uploadSong(QTcpSocket * sender, const QByteArray data);
-	void downloadSong(QByteArray data);
 	void startStreamingSong(QTcpSocket * sender, const QByteArray data);
 	void playStreamSong(const QByteArray Data);
 
