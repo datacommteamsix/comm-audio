@@ -7,6 +7,8 @@
 #include <QWidget>
 
 #include "globals.h"
+#include "SocketTimer.h"
+
 
 class DownloadManager : public QWidget
 {
@@ -23,6 +25,7 @@ private:
 	QDir * mDownloads;
 
 	QMap<quint32, QTcpSocket *> mConnections;
+	QMap<quint32, SocketTimer *> mTimers;
 	QMap<quint32, QFile *> mFiles;
 
 	QTcpServer mServer;
@@ -37,7 +40,10 @@ private slots:
 	void incomingDataHandler();
 	void disconnectHandler();
 
+	void timeoutHandler();
+
 public slots:
 	void DownloadFile(QString songName, quint32 address);
 
 };
+

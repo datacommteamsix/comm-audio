@@ -65,6 +65,9 @@
     <QtMoc Include="DownloadManager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="SocketTimer.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="CommAudio.ui">
