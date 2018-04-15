@@ -1,20 +1,34 @@
 #include <DownloadManager.h>
 
-DownloadManager::DownloadManager(QDir * source, QDir * downloads, QWidget * parent)
+DownloadManager::DownloadManager(const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent)
 	: QWidget(parent)
+	, mKey(key)
 	, mSource(source)
 	, mDownloads(downloads)
 	, mServer(this)
 {
-	connect(&mServer, QTcpServer::newConnection, this, &DownloadManager::newConnectionHandler);
+	connect(&mServer, &QTcpServer::newConnection, this, &DownloadManager::newConnectionHandler);
 	mServer.listen(QHostAddress::AnyIPv4, 42071);
 }
 
 void DownloadManager::DownloadFile(QString songName, quint32 address)
 {
-	// Send download request here
-	// open qfile here for downloaded contents
-	// save it in map with address as key
+	QTcpSocket * socket = new QTcpSocket(this);
+	connect(socket, &QTcpSocket::readyRead, this, &DownloadManager::incomingDataHandler);
+	connect(socket, &QTcpSocket::disconnected, this, &DownloadManager::disconnectHandler);
+
+	socket->connectToHost(QHostAddress(address), 42071);
+	mConnections[address] = socket;
+
+	mFiles[address] = new QFile(mDownloads->absoluteFilePath(songName));
+	mFiles[address]->open(QFile::WriteOnly);
+
+	QByteArray request = QByteArray(1, (char)Headers::RequestDownload);
+	request.append(*mKey);
+	request.append(songName);
+	request.resize(1 + 32 + 255);
+
+	socket->write(request);
 }
 
 void DownloadManager::newConnectionHandler()
@@ -47,18 +61,23 @@ void DownloadManager::incomingDataHandler()
 
 void DownloadManager::uploadSong(QByteArray data, QTcpSocket * socket)
 {
-	// Open the file
+	quint32 address = socket->peerAddress().toIPv4Address();
 
-	// in a while loop
-	// send chunks for the file
+	QFile file(mSource->absoluteFilePath(data.mid(32)));
+	file.open(QFile::ReadOnly);
 
-	// close the file
-	// close the socket
+	while (!file.atEnd())
+	{
+		socket->write(QByteArray(1, (char)Headers::RespondDownload) + file.read(8192));
+	}
+
+	file.close();
+	socket->close();
 }
 
 void DownloadManager::writeToFile(QByteArray data, quint32 address)
 {
-	// write to the file that has the address as key	
+	mFiles[address]->write(data);
 }
 
 void DownloadManager::disconnectHandler()
@@ -66,9 +85,11 @@ void DownloadManager::disconnectHandler()
 	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	// remove socket from the map
 	mConnections.take(address)->deleteLater();
 
-	// Remove file from the map and close it
-	mFiles.take(address).close();
+	if (mFiles.contains(address))
+	{
+		mFiles[address]->close();
+		delete mFiles.take(address);
+	}
 }

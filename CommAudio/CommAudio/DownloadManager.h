@@ -13,15 +13,17 @@ class DownloadManager : public QWidget
 	Q_OBJECT
 
 public:
-	DownloadManager(QDir * source, QDir * downloads, QWidget * parent = nullptr);
+	DownloadManager(const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent = nullptr);
 	~DownloadManager() = default;
 
 private:
+	const QByteArray * mKey;
+
 	QDir * mSource;
 	QDir * mDownloads;
 
 	QMap<quint32, QTcpSocket *> mConnections;
-	QMap<quint32, QFile> mFiles;
+	QMap<quint32, QFile *> mFiles;
 
 	QTcpServer mServer;
 
