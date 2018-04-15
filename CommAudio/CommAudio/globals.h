@@ -1,6 +1,6 @@
 #pragma once
 
-#define TEST_HOST_IP "192.168.0.16"
+#define TEST_HOST_IP "192.168.0.13"
 #define SUPPORTED_FORMATS { "*.wav" }
 
 #include <QByteArray>

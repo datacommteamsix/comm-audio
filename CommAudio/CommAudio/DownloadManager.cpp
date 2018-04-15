@@ -57,14 +57,14 @@ void DownloadManager::incomingDataHandler()
 {
 	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
 	quint32 address = socket->peerAddress().toIPv4Address();
-	QByteArray data = socket->read(8192);
 
 	if (mFiles.contains(address))
 	{
-		writeToFile(data, address);
+		writeToFile(socket->readAll(), address);
 	}
 	else
 	{
+		QByteArray data = socket->read(1 + 32 + 255);
 		if (data[0] == (char)Headers::RequestDownload)
 		{
 			uploadSong(data.mid(1), socket);
