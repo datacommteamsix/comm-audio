@@ -49,7 +49,7 @@ void DownloadManager::incomingDataHandler()
 	quint32 address = socket->peerAddress().toIPv4Address();
 	QByteArray data = socket->read(8192);
 
-	if (mFiles.contains[address])
+	if (mFiles.contains(address))
 	{
 		writeToFile(data, address);
 	}
@@ -57,7 +57,7 @@ void DownloadManager::incomingDataHandler()
 	{
 		if (data[0] == (char)Headers::RequestDownload)
 		{
-			uploadSong(socket->read(32 + 255), socket);
+			uploadSong(data.mid(1), socket);
 		}
 	}
 }
