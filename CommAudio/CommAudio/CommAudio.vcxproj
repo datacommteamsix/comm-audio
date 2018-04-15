@@ -132,6 +132,7 @@
     <QtRcc Include="CommAudio.qrc" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="SocketTimer.h" />
     <QtMoc Include="VoipModule.h" />
     <QtMoc Include="MediaPlayer.h" />
     <QtMoc Include="ConnectionManager.h" />
