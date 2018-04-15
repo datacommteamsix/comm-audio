@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="CommAudio.cpp" />
     <ClCompile Include="ConnectionManager.cpp" />
+    <ClCompile Include="DownloadManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MediaPlayer.cpp" />
     <ClCompile Include="VoipModule.cpp" />
@@ -131,9 +132,11 @@
     <QtRcc Include="CommAudio.qrc" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="SocketTimer.h" />
     <QtMoc Include="VoipModule.h" />
     <QtMoc Include="MediaPlayer.h" />
     <QtMoc Include="ConnectionManager.h" />
+    <QtMoc Include="DownloadManager.h" />
     <ClInclude Include="globals.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

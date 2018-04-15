@@ -45,6 +45,9 @@
     <ClCompile Include="VoipModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DownloadManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="CommAudio.h">
@@ -57,6 +60,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="VoipModule.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="DownloadManager.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="SocketTimer.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
