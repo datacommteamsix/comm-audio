@@ -63,6 +63,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mStreamManager(&mSessionKey, &mSongFolder, &mDownloadFolder, this)
 {
 	ui.setupUi(this);
+	setWindowTitle(TITLE_DEFAULT);
 
 	// Create the Media Player
 	mMediaPlayer = new MediaPlayer(&ui, this);
@@ -249,6 +250,8 @@ void CommAudio::hostSessionHandler()
 	mConnectionManager.BecomeHost(mSessionKey);
 
 	mVoip.Start();
+
+	setWindowTitle(TITLE_HOST);
 }
 
 void CommAudio::joinSessionHandler()
@@ -300,10 +303,12 @@ void CommAudio::joinSessionHandler()
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
 	emit connectVoip(hostAddress);
+	setWindowTitle(TITLE_CLIENT);
 }
 
 void CommAudio::leaveSessionHandler()
 {
+	setWindowTitle(TITLE_DEFAULT);
 	//If you are a host
 	mConnectionManager.BecomeClient();
 
