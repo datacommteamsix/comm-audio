@@ -131,9 +131,11 @@ CommAudio::CommAudio(QWidget * parent)
 ----------------------------------------------------------------------------------------------------------------------*/
 CommAudio::~CommAudio()
 {
-	for (QTcpSocket * socket : mConnections)
+	QList<QString> keys = mConnections.keys();
+
+	for (int i = 0; i < keys.size(); i++)
 	{
-		socket->close();
+		mConnections[keys[i]]->close();
 	}
 
 	delete mMediaPlayer;
