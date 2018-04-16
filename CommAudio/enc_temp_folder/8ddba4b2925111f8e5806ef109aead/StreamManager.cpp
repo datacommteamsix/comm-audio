@@ -42,7 +42,8 @@ void StreamManager::disconnectHandler()
 
 	if (mFiles.contains(address))
 	{
-		mFiles.clear();
+		mFiles[address]->close();
+		delete mFiles.take(address);
 	}
 }
 
@@ -55,7 +56,8 @@ void StreamManager::StreamSong(QString songName, quint32 address)
 	socket->connectToHost(QHostAddress(address), STREAM_PORT);
 	mConnections[address] = socket;
 
-	mFiles[address] = true;
+	mFiles[address] = new QFile(mDownloads->absoluteFilePath(songName));
+	mFiles[address]->open(QFile::WriteOnly);
 
 	QByteArray request = QByteArray(1, (char)Headers::RequestAudioStream);
 	request.append(*mKey);

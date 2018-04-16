@@ -27,7 +27,6 @@ private:
 
 	QMap<quint32, QTcpSocket *> mConnections;
 	QMap<quint32, SocketTimer *> mTimers;
-	QMap<quint32, bool> mFiles;
 
 	QTcpServer mServer;
 	MediaPlayer * mMediaPlayer;

@@ -13,7 +13,7 @@
 #define DOWNLOAD_CHUNCK_SIZE 8192
 #define DOWNLOAD_TIMEOUT 5 * 1000
 
-#define TEST_HOST_IP "192.168.0.16"
+#define TEST_HOST_IP "127.0.0.1"
 #define SUPPORTED_FORMATS { "*.wav" }
 
 #include <QByteArray>
