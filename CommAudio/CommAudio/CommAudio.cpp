@@ -220,6 +220,8 @@ QString CommAudio::getAddressFromUser()
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::hostSessionHandler()
 {
+	leaveSessionHandler();
+
 	// Generate session key
 	QCryptographicHash hasher(QCryptographicHash::Sha3_256);
 
@@ -258,11 +260,9 @@ void CommAudio::hostSessionHandler()
 
 void CommAudio::joinSessionHandler()
 {
-	mIsHost = false;
-	mConnectionManager.BecomeClient();
-	mVoip.Start();
+	leaveSessionHandler();
 
-	mSessionKey = QByteArray();
+	mVoip.Start();
 
 	// Send Request to join session
 	QByteArray joinRequest = QByteArray(1 + 33, (char)0);
@@ -311,10 +311,12 @@ void CommAudio::joinSessionHandler()
 void CommAudio::leaveSessionHandler()
 {
 	setWindowTitle(TITLE_DEFAULT);
-	//If you are a host
-	mConnectionManager.BecomeClient();
 
+	mIsHost = false;
+	mConnectionManager.BecomeClient();
 	mVoip.Stop();
+
+	mSessionKey = QByteArray();
 
 	// Disconnect from all memebers
 	for (QTcpSocket * socket : mConnections)
