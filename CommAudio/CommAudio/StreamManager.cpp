@@ -1,12 +1,11 @@
 #include <StreamManager.h>
 
-StreamManager::StreamManager(MediaPlayer * mediaplayer, const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent)
+StreamManager::StreamManager(const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent)
 	: QWidget(parent)
 	, mKey(key)
 	, mSource(source)
 	, mDownloads(downloads)
 	, mServer(this)
-	, mMediaPlayer(mediaplayer)
 	, mSongSource(0)
 {
 	connect(&mServer, &QTcpServer::newConnection, this, &StreamManager::newConnectionHandler);
@@ -53,6 +52,8 @@ void StreamManager::StreamSong(QString songName, quint32 address)
 	request.resize(1 + KEY_SIZE + SONGNAME_SIZE);
 
 	socket->write(request);
+
+	qDebug() << "Requseting stream";
 }
 
 void StreamManager::incomingDataHandler()
@@ -64,6 +65,7 @@ void StreamManager::incomingDataHandler()
 	{
 		if (mMediaPlayer->State() == MediaPlayer::StoppedState)
 		{
+			qDebug() << "Starting stream";
 			mMediaPlayer->StartStream(socket);
 		}
 	}
@@ -90,11 +92,4 @@ void StreamManager::uploadSong(QByteArray data, QTcpSocket * socket)
 	}
 
 	file.close();
-}
-
-void StreamManager::playSong(QByteArray data, quint32 address)
-{
-	QBuffer *buffer = new QBuffer(&data);
-	buffer->open(QIODevice::ReadOnly);
-	qDebug() << data.size();
 }

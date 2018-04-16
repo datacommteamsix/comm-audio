@@ -30,7 +30,7 @@ public:
 	void SetSong(QString absoluteFileName);
 	void StartStream(QTcpSocket * socket);
 	void SetDirAndSong(QDir songDir, QTreeWidgetItem *currSong);
-	void updateSongList(QList<QTreeWidgetItem *> songList);
+	void UpdateSongList(QList<QTreeWidgetItem *> songList);
 
 	void Play();
 	void Pause();
@@ -40,9 +40,16 @@ public:
 	int GetDuration();
 
 private:
+	enum SourceType
+	{
+		Song,
+		Stream
+	};
+
 	Ui::CommAudioClass * ui;
 
 	PlayerState mState;
+	SourceType mSourceType;
 
 	// Song variables
 	WavHeader * mSongHeader;
