@@ -146,19 +146,18 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 
 	if (!isAlreadyConnected)
 	{
-		QByteArray incomingKey = data.mid(1, 32);
-
-		if (incomingKey == *mKey)
+		if (mIsHost)
 		{
 			emit connectionAccepted(clientName, socket);
+			sendListOfClients(socket);
+		}
+		else
+		{
+			QByteArray incomingKey = data.mid(1, 32);
 
-			if (mIsHost)
+			if (incomingKey == *mKey)
 			{
-				// If this is a new client
-				sendListOfClients(socket);
-			}
-			else
-			{
+				emit connectionAccepted(clientName, socket);
 				sendName(socket);
 			}
 		}

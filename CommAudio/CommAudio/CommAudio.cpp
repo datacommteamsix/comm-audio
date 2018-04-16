@@ -628,9 +628,6 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	joinRequest[0] = (char)Headers::RequestToJoin;
 	joinRequest.replace(1, mSessionKey.size(), mSessionKey);
 	joinRequest.replace(1 + 32, mName.size(), mName.toStdString().c_str());
-	joinRequest.resize(1 + 32 + 33);
-
-	assert(joinRequest.size() == 1 + 33);
 
 	// Send connect request to all other clients in the session
 	int offset = 1 + KEY_SIZE + 1;
