@@ -17,9 +17,11 @@
 #include <QInputDialog>
 #include <QList>
 #include <QMap>
+#include <QMessageBox>
 #include <QNetworkInterface>
 #include <QPoint>
 #include <QPushButton>
+#include <QRegExp>
 #include <QSlider>
 #include <QString>
 #include <QStringList>
@@ -68,6 +70,8 @@ private:
 	DownloadManager mDownloadManager;
 
 	// Functions
+	QString getAddressFromUser();
+
 	void populateLocalSongsList();
 
 	void parsePacketHost(QTcpSocket * sender, const QByteArray data);

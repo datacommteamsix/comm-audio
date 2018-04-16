@@ -1,5 +1,17 @@
 #pragma once
 
+#define DEFAULT_PORT	42069
+#define VOIP_PORT		42070
+#define DOWNLOAD_PORT	42071
+
+#define CONNECT_TIMEOUT 5 * 1000
+
+#define KEY_SIZE 32
+#define SONGNAME_SIZE 255
+
+#define DOWNLOAD_CHUNCK_SIZE 8192
+#define DOWNLOAD_TIMEOUT 5 * 1000
+
 #define TEST_HOST_IP "192.168.0.16"
 #define SUPPORTED_FORMATS { "*.wav" }
 

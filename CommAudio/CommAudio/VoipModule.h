@@ -9,6 +9,8 @@
 #include <QTcpSocket>
 #include <QWidget>
 
+#include "globals.h"
+
 class VoipModule : public QWidget
 {
 	Q_OBJECT

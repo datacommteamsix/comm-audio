@@ -173,6 +173,23 @@ void CommAudio::populateLocalSongsList()
 	mMediaPlayer->updateSongList(items);
 }
 
+QString CommAudio::getAddressFromUser()
+{
+	bool ok;
+	QRegExp rx("(?:[0-9]{1,3}\.){3}[0-9]{1,3}");
+    QString text = QInputDialog::getText(this, tr("Enter Host Address"), "Host Address:", 
+											QLineEdit::Normal, "", &ok);
+
+	if (ok && rx.exactMatch(text))
+	{
+		return text;
+	}
+	else
+	{
+		return "";
+	}
+}
+
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:		CommAudio::hostSessionHandler
 --
@@ -249,10 +266,27 @@ void CommAudio::joinSessionHandler()
 	assert(joinRequest.size() == 1 + 33);
 
 	// Create connection
+	QString address = getAddressFromUser();
+
+	if (address == "")
+	{
+		QMessageBox::warning(this, "Invalid Address", "The address you entered was invalid");
+		return;
+	}
+	
+	QHostAddress hostAddress = QHostAddress(address);
 	QTcpSocket * socket = new QTcpSocket(this);
-	socket->connectToHost(TEST_HOST_IP, 42069);
+	socket->connectToHost(hostAddress, DEFAULT_PORT);
+
+	if (!socket->waitForConnected(CONNECT_TIMEOUT))
+	{
+		socket->deleteLater();
+		QMessageBox::warning(this, "Connetion Error", "Connection Timed Out");
+		return;
+	}
+
 	mConnections["Hard Coded Host Name"] = socket;
-	mIpToName[QHostAddress(TEST_HOST_IP).toIPv4Address()] = "Hard Coded Host Name";
+	mIpToName[hostAddress.toIPv4Address()] = "Hard Coded Host Name";
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
@@ -263,7 +297,7 @@ void CommAudio::joinSessionHandler()
 	host << "Hard Coded Host Name" << "Host";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
-	emit connectVoip(QHostAddress(TEST_HOST_IP));
+	emit connectVoip(hostAddress);
 }
 
 void CommAudio::leaveSessionHandler()
@@ -513,7 +547,7 @@ void CommAudio::startStreamingSong(QTcpSocket * sender, const QByteArray data)
 {
 	QByteArray packet = QByteArray(1, (char)Headers::RespondAudioStream);
 	//packet.append(mSessionKey);
-	//packet.resize(1 + 32);
+	//packet.resize(1 + KEY_SIZE);
 }
 
 void CommAudio::playStreamSong(const QByteArray Data)
@@ -525,7 +559,7 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::RequestForSongs);
 	packet.append(mSessionKey);
-	packet.resize(1 + 33);
+	packet.resize(1 + KEY_SIZE);
 
 	// Send
 	socket->write(packet);
@@ -533,8 +567,7 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 
 void CommAudio::returnSongList(QTcpSocket * socket)
 {
-	int initSize = 1 + 32 + 4;
-	int songNameSize = 255;
+	int initSize = 1 + KEY_SIZE + 4;
 	quint32 songSize = items.size();
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::ReturnWithSongs);
@@ -544,7 +577,7 @@ void CommAudio::returnSongList(QTcpSocket * socket)
 	for (QTreeWidgetItem * item : items)
 	{
 		packet.append((item->text(0)).toUtf8());
-		initSize += songNameSize;
+		initSize += SONGNAME_SIZE;
 		packet.resize(initSize);
 	}
 
@@ -554,8 +587,7 @@ void CommAudio::returnSongList(QTcpSocket * socket)
 
 void CommAudio::sendSongList(QTcpSocket * socket)
 {
-	int initSize = 1 + 32 + 4;
-	int songNameSize = 255;
+	int initSize = 1 + KEY_SIZE + 4;
 	quint32 songSize = items.size();
 	// Create packet
 	QByteArray packet = QByteArray(1, (char)Headers::RespondWithSongs);
@@ -565,7 +597,7 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 	for (QTreeWidgetItem * item : items)
 	{
 		packet.append((item->text(0)).toUtf8());
-		initSize += songNameSize;
+		initSize += SONGNAME_SIZE;
 		packet.resize(initSize);
 	}
 
@@ -576,7 +608,7 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 void CommAudio::connectToAllOtherClients(const QByteArray data)
 {
 	// Grab session key
-	mSessionKey = data.mid(1, 32);
+	mSessionKey = data.mid(1, KEY_SIZE);
 
 	// Grab the length
 	int length = (int)data[33];
@@ -590,7 +622,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	assert(joinRequest.size() == 1 + 33);
 
 	// Send connect request to all other clients in the session
-	int offset = 1 + 32 + 1;
+	int offset = 1 + KEY_SIZE + 1;
 
 	for (int i = 0; i < length; i++)
 	{
@@ -606,7 +638,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 		connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 		connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
-		socket->connectToHost(address, 42069);
+		socket->connectToHost(address, DEFAULT_PORT);
 		socket->write(joinRequest);
 		offset += 4;
 	}
@@ -660,7 +692,7 @@ void CommAudio::displayClientName(const QByteArray data, QTcpSocket * socket)
 void CommAudio::displaySongName(const QByteArray data, QTcpSocket * sender)
 {
 	quint32 length = -1;
-	QDataStream(data.mid(1 + 32, 4)) >> length;
+	QDataStream(data.mid(1 + KEY_SIZE, 4)) >> length;
 
 	int offset = 37;
 	QStringList songList;
@@ -676,8 +708,8 @@ void CommAudio::displaySongName(const QByteArray data, QTcpSocket * sender)
 
 	for (quint32 i = 0; i < length; i++)
 	{
-		songList << QString(data.mid(offset, 255)) << clientName;
-		offset += 255;
+		songList << QString(data.mid(offset, SONGNAME_SIZE)) << clientName;
+		offset += SONGNAME_SIZE;
 
 		// Append song and the widget item to the owner to song map
 		mOwnerToSong.value(clientName, NULL)->append(new QTreeWidgetItem(ui.treeRemoteSongs, songList));
