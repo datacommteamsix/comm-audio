@@ -16,8 +16,10 @@ class StreamManager : public QWidget
 	Q_OBJECT
 
 public:
-	StreamManager(MediaPlayer * mediaplayer, const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent = nullptr);
+	StreamManager(const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent = nullptr);
 	~StreamManager() = default;
+
+	MediaPlayer * mMediaPlayer;
 
 private:
 	const QByteArray * mKey;
@@ -26,24 +28,19 @@ private:
 	QDir * mDownloads;
 	QAudioFormat mFormat;
 
+	quint32 mSongSource;
 	QMap<quint32, QTcpSocket *> mConnections;
-	QMap<quint32, SocketTimer *> mTimers;
-	QMap<quint32, QAudioOutput *> mOutputs;
 
 	QTcpServer mServer;
-	MediaPlayer * mMediaPlayer;
 
 	void uploadSong(QByteArray data, QTcpSocket * socket);
-	void playSong(QByteArray data, quint32 address);
 
-	private slots:
+private slots:
 	void newConnectionHandler();
 	void incomingDataHandler();
 	void disconnectHandler();
 
-	void timeoutHandler();
-
-	public slots:
+public slots:
 	void StreamSong(QString songName, quint32 address);
 
 };
