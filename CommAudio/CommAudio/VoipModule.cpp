@@ -178,6 +178,13 @@ void VoipModule::newConnectionHandler()
 	QTcpSocket * socket = mServer.nextPendingConnection();
 	quint32 address = socket->peerAddress().toIPv4Address();
 
+	if (mConnections.contains(address))
+	{
+		socket->close();
+		socket->deleteLater();
+		return;
+	}
+
 	connect(socket, &QTcpSocket::readyRead, this, &VoipModule::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &VoipModule::clientDisconnectHandler);
 
@@ -243,12 +250,17 @@ void VoipModule::incomingDataHandler()
 ----------------------------------------------------------------------------------------------------------------------*/
 void VoipModule::newClientHandler(QHostAddress address)
 {
+	if (mConnections.contains(address.toIPv4Address()))
+	{
+		return;
+	}
+
 	QTcpSocket * socket = new QTcpSocket(this);
+
+	socket->connectToHost(address, VOIP_PORT);
 
 	connect(socket, &QTcpSocket::readyRead, this, &VoipModule::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &VoipModule::clientDisconnectHandler);
-
-	socket->connectToHost(address, VOIP_PORT);
 
 	mConnections[address.toIPv4Address()] = socket;
 	mInputs[address.toIPv4Address()] = new QAudioInput(mFormat, this);
@@ -282,7 +294,7 @@ void VoipModule::clientDisconnectHandler()
 	quint32 address = sender->peerAddress().toIPv4Address();
 
 	mConnections.take(address)->deleteLater();
-
+	
 	QAudioOutput * output = mOutputs.take(address);
 	QAudioInput * input = mInputs.take(address);
 
