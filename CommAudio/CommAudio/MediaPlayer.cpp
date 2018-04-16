@@ -186,6 +186,11 @@ void MediaPlayer::playSongButtonHandler()
 //Roger
 void MediaPlayer::prevSongButtonHandler()
 {
+	if (songList.size() == 0)
+	{
+		return;
+	}
+
 	int index = songList.indexOf(mCurrentSong);
 	index -= 1;
 	if (index < 0) { index = songList.size() - 1; }
@@ -197,6 +202,11 @@ void MediaPlayer::prevSongButtonHandler()
 //Roger
 void MediaPlayer::nextSongButtonHandler()
 {
+	if (songList.size() == 0)
+	{
+		return;
+	}
+	
 	int index = songList.indexOf(mCurrentSong);
 	index += 1;
 	if (index > songList.size() - 1) { index = 0; }
