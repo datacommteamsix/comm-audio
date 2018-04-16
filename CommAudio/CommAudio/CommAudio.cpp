@@ -655,9 +655,12 @@ void CommAudio::remoteDisconnectHandler()
 	//Delete the client songs
 	QList<QTreeWidgetItem*>* items = mOwnerToSong.value(clientName, NULL);
 
-	for (int i = 0; i < items->length(); i++)
+	if (items)
 	{
-		delete items->value(i);
+		for (int i = 0; i < items->size(); i++)
+		{
+			delete items->value(i);
+		}
 	}
 
 	//delete the socket
