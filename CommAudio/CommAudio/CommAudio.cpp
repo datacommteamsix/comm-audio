@@ -628,7 +628,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	}
 }
 
-//This is to handle a disconnect from a client requesting the leave session and to this client
+// This is to handle a disconnect from a client requesting the leave session and to this client
 void CommAudio::remoteDisconnectHandler()
 {
 	//Get the socket that sent the signal

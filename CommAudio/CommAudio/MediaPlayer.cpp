@@ -103,7 +103,7 @@ void MediaPlayer::StartStream(QTcpSocket * socket)
 
 void MediaPlayer::Play()
 {
-	if (mSong != nullptr)
+	if (mSong->isOpen())
 	{
 		mPlayer->start(mSong);
 		mState = PlayerState::PlayingState;
