@@ -120,6 +120,7 @@
     <ClCompile Include="DownloadManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MediaPlayer.cpp" />
+    <ClCompile Include="StreamManager.cpp" />
     <ClCompile Include="VoipModule.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +133,7 @@
     <QtRcc Include="CommAudio.qrc" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="StreamManager.h" />
     <QtMoc Include="SocketTimer.h" />
     <QtMoc Include="VoipModule.h" />
     <QtMoc Include="MediaPlayer.h" />

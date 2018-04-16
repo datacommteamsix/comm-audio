@@ -5,6 +5,7 @@ MediaPlayer::MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent)
 	, mSongHeader(new WavHeader)
 	, mSongFormat(new QAudioFormat())
 	, mSong(new QFile())
+	, mState(PlayerState::StoppedState)
 {
 	memset(mSongHeader, 0, sizeof(WavHeader));
 
@@ -88,6 +89,16 @@ void MediaPlayer::SetSong(QString absoluteFilename)
 	// Change slider max
 	ui->sliderProgress->setMaximum(totalSeconds);
 	ui->sliderProgress->setSliderPosition(0);
+
+	mSourceType = SourceType::Song;
+}
+
+void MediaPlayer::StartStream(QTcpSocket * socket)
+{
+	mPlayer->stop();
+	mPlayer->start(socket);
+	mState = PlayerState::PlayingState;
+	mSourceType = SourceType::Stream;
 }
 
 void MediaPlayer::Play()
@@ -95,22 +106,36 @@ void MediaPlayer::Play()
 	if (mSong != nullptr)
 	{
 		mPlayer->start(mSong);
+		mState = PlayerState::PlayingState;
+		mSourceType = SourceType::Song;
 	}
 }
 
 void MediaPlayer::Pause()
 {
 	mPlayer->suspend();
+	mState = PlayerState::StoppedState;
 }
 
 void MediaPlayer::Stop()
 {
 	mPlayer->stop();
 	mSong->seek(0);
+	mState = PlayerState::StoppedState;
+}
+
+MediaPlayer::PlayerState MediaPlayer::State()
+{
+	return mState;
 }
 
 int MediaPlayer::GetDuration()
 {
+	if (mSourceType == SourceType::Stream)
+	{
+		return 1;
+	}
+
 	return mSongHeader->totalLength / mSongHeader->bytesPerSecond;
 }
 
@@ -149,7 +174,6 @@ void MediaPlayer::playSongButtonHandler()
 	case QAudio::ActiveState:
 		Pause();
 		break;
-		break;
 	case QAudio::StoppedState:
 	case QAudio::SuspendedState:
 		Play();
@@ -182,7 +206,7 @@ void MediaPlayer::nextSongButtonHandler()
 }
 
 //Roger
-void MediaPlayer::updateSongList(QList<QTreeWidgetItem *> items)
+void MediaPlayer::UpdateSongList(QList<QTreeWidgetItem *> items)
 {
 	songList = items;
 }
@@ -212,7 +236,10 @@ void MediaPlayer::updateSongList(QList<QTreeWidgetItem *> items)
 ----------------------------------------------------------------------------------------------------------------------*/
 void MediaPlayer::seekPositionHandler(int position)
 {
-	mSong->seek(position * mSongHeader->bytesPerSecond);
+	if (mSourceType == SourceType::Song)
+	{
+		mSong->seek(position * mSongHeader->bytesPerSecond);
+	}
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -257,6 +284,13 @@ void MediaPlayer::songStateChangeHandler(QAudio::State state)
 
 void MediaPlayer::songProgressHandler()
 {
+	if (mSourceType == SourceType::Stream)
+	{
+		ui->sliderProgress->setValue(0);
+		ui->labelCurrentTime->setText("");
+		return;
+	}
+
 	int progress = ui->sliderProgress->value() + 1;
 	int maxDuration = GetDuration();
 
