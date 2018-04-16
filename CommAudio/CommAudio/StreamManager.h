@@ -26,6 +26,7 @@ private:
 
 	QDir * mSource;
 	QDir * mDownloads;
+	QAudioFormat mFormat;
 
 	quint32 mSongSource;
 	QMap<quint32, QTcpSocket *> mConnections;
