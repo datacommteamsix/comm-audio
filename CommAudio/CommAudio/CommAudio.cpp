@@ -508,9 +508,6 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 	case Headers::ReturnWithSongs:
 		displaySongName(data, sender);
 		break;
-	case Headers::RequestAudioStream:
-		startStreamingSong(sender, data);
-		break;
 	}
 }
 
@@ -535,9 +532,6 @@ void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 		break;
 	case Headers::ReturnWithSongs:
 		displaySongName(data, sender);
-		break;
-	case Headers::RespondAudioStream:
-		playStreamSong(data);
 		break;
 	default:
 		break;
