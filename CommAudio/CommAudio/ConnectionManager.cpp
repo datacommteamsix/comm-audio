@@ -1,10 +1,11 @@
 #include "ConnectionManager.h"
 
-ConnectionManager::ConnectionManager(QString * name, QWidget * parent)
+ConnectionManager::ConnectionManager(QByteArray * key, QString * name, QWidget * parent)
 	: QWidget(parent)
 	, mName(name)
 	, mIsHost(false)
 	, mServer(this)
+	, mKey(key)
 {
 }
 
@@ -23,16 +24,14 @@ void ConnectionManager::Init(QMap<QString, QTcpSocket *> * connectedClients)
 	startServerListen();
 }
 
-void ConnectionManager::BecomeHost(QByteArray key)
+void ConnectionManager::BecomeHost()
 {
 	mIsHost = true;
-	mKey = key;
 }
 
 void ConnectionManager::BecomeClient()
 {
 	mIsHost = false;
-	mKey = QByteArray();
 }
 
 void ConnectionManager::AddPendingConnection(const quint32 address, QTcpSocket * socket)
@@ -53,7 +52,7 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 	QByteArray packet = QByteArray(1, (char)Headers::RespondToJoin);
 
 	// Add the session key to the packet
-	packet.append(mKey);
+	packet.append(*mKey);
 
 	// Add the number of clients to the packet
 	quint32 size = mConnectedClients->size() - 1;
@@ -147,16 +146,21 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 
 	if (!isAlreadyConnected)
 	{
-		emit connectionAccepted(clientName, socket);
+		QByteArray incomingKey = data.mid(1, 32);
 
-		if (mIsHost)
+		if (incomingKey == *mKey)
 		{
-			// If this is a new client
-			sendListOfClients(socket);
-		}
-		else
-		{
-			sendName(socket);
+			emit connectionAccepted(clientName, socket);
+
+			if (mIsHost)
+			{
+				// If this is a new client
+				sendListOfClients(socket);
+			}
+			else
+			{
+				sendName(socket);
+			}
 		}
 	}
 

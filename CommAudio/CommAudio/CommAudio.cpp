@@ -57,7 +57,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mConnections()
 	, mIpToName()
 	, mOwnerToSong()
-	, mConnectionManager(&mName, this)
+	, mConnectionManager(&mSessionKey, &mName, this)
 	, mVoip(this)
 	, mDownloadManager(&mSessionKey, &mSongFolder, &mDownloadFolder, this)
 	, mStreamManager(&mSessionKey, &mSongFolder, &mDownloadFolder, this)
@@ -253,7 +253,7 @@ void CommAudio::hostSessionHandler()
 	mIsHost = true;
 
 	// Set the connection manager to host mode;
-	mConnectionManager.BecomeHost(mSessionKey);
+	mConnectionManager.BecomeHost();
 
 	mVoip.Start();
 
@@ -624,10 +624,11 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	int length = (int)data[33];
 
 	// Craft connect request
-	QByteArray joinRequest = QByteArray(1 + 33, (char)0);
+	QByteArray joinRequest = QByteArray(1 + 32 + 33, (char)0);
 	joinRequest[0] = (char)Headers::RequestToJoin;
-	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
-	joinRequest.resize(1 + 33);
+	joinRequest.replace(1, mSessionKey.size(), mSessionKey);
+	joinRequest.replace(1 + 32, mName.size(), mName.toStdString().c_str());
+	joinRequest.resize(1 + 32 + 33);
 
 	assert(joinRequest.size() == 1 + 33);
 
