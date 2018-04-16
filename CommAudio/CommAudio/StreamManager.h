@@ -24,14 +24,14 @@ private:
 
 	QDir * mSource;
 	QDir * mDownloads;
+	QAudioFormat mFormat;
 
 	QMap<quint32, QTcpSocket *> mConnections;
 	QMap<quint32, SocketTimer *> mTimers;
-	QMap<quint32, bool> mFiles;
+	QMap<quint32, QAudioOutput *> mOutputs;
 
 	QTcpServer mServer;
 	MediaPlayer * mMediaPlayer;
-	QAudioOutput * mplayer;
 
 	void uploadSong(QByteArray data, QTcpSocket * socket);
 	void playSong(QByteArray data, quint32 address);
