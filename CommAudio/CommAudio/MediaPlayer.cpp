@@ -113,8 +113,14 @@ void MediaPlayer::Play()
 
 void MediaPlayer::Pause()
 {
-	mPlayer->suspend();
-	mState = PlayerState::StoppedState;
+	if (mSourceType == SourceType::Song)
+	{
+		mPlayer->suspend();
+		mState = PlayerState::StoppedState;
+	}
+	else {
+		mPlayer->stop();
+	}
 }
 
 void MediaPlayer::Stop()

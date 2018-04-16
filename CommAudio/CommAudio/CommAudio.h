@@ -55,6 +55,7 @@ private:
 	bool mIsHost;
 	QString mName;
 	QByteArray mSessionKey;
+	QTreeWidgetItem *nd;
 
 	QDir mSongFolder;
 	QDir mDownloadFolder;
@@ -100,7 +101,8 @@ private slots:
 	// Song Lists
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
 	void remoteSongClickedHandler(QTreeWidgetItem * item, int column);
-	void remoteSongDoubleClickedHandler(QTreeWidgetItem * item, int column);
+	void remoteMenuHandler(const QPoint & pos);
+	void downloadSong();
 
 	// Networking
 	void newConnectionHandler(QString name, QTcpSocket * socket);
