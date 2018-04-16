@@ -460,7 +460,7 @@ void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
 
 void CommAudio::remoteMenuHandler(const QPoint & pos)
 {
-	nd = ui.treeLocalSongs->itemAt(pos);
+	nd = ui.treeRemoteSongs->itemAt(pos);
 
 	QAction *newAct = new QAction(QIcon(":/Resource/warning32.ico"), tr("&Download"), this);
 	newAct->setStatusTip(tr("Download Song"));
@@ -470,12 +470,13 @@ void CommAudio::remoteMenuHandler(const QPoint & pos)
 	menu.addAction(newAct);
 
 	QPoint pt(pos);
-	menu.exec(ui.treeLocalSongs->mapToGlobal(pos));
+	menu.exec(ui.treeRemoteSongs->mapToGlobal(pos));
 }
 
 void CommAudio::downloadSong()
 {
 	QTcpSocket * socket = mConnections[nd->text(1)];
+	qDebug() << nd->text(0) << "-" << nd->text(1);
 	mDownloadManager.DownloadFile(nd->text(0), socket->peerAddress().toIPv4Address());
 }
 
