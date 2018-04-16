@@ -141,10 +141,6 @@ void VoipModule::Stop()
 {
 	mServer.close();
 
-	// This is done instead of iteration through the map of connections because sockets
-	// are removed from the list when they are closed, thus the map would be resized as
-	// we were iteration through it. This way we iterate through a temporary list so there
-	// is no problem.
 	QList<quint32> addresses = mConnections.keys();
 	for (int i = 0; i < addresses.size(); i++)
 	{
