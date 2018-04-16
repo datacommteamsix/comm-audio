@@ -4,7 +4,15 @@
 -- PROGRAM:			CommAudio
 --
 -- FUNCTIONS:
---
+--					DownloadManager(const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent = nullptr);
+--					~DownloadManager() = default;
+--					void uploadSong(QByteArray data, QTcpSocket * socket)
+--					void writeToFile(QByteArray data, quint32 address)
+--					void newConnectionHandler()
+--					void incomingDataHandler()
+--					void disconnectHandler();
+--					void timeoutHandler()
+--					void DownloadFile(QString songName, quint32 address)
 --
 -- DATE:			April 14, 2018
 --
