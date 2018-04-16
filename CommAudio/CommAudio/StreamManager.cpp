@@ -18,7 +18,6 @@ void StreamManager::newConnectionHandler()
 	quint32 address = socket->peerAddress().toIPv4Address();
 
 	mConnections[address] = socket;
-	mOutputs[address] = new QAudioOutput(mFormat, this);
 	connect(socket, &QTcpSocket::readyRead, this, &StreamManager::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &StreamManager::disconnectHandler);
 }

@@ -175,7 +175,6 @@ void MediaPlayer::playSongButtonHandler()
 		Pause();
 		break;
 	case QAudio::StoppedState:
-		break;
 	case QAudio::SuspendedState:
 		Play();
 		break;
