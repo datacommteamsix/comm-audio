@@ -60,11 +60,13 @@ CommAudio::CommAudio(QWidget * parent)
 	, mConnectionManager(&mName, this)
 	, mVoip(this)
 	, mDownloadManager(&mSessionKey, &mSongFolder, &mDownloadFolder, this)
+	, mStreamManager(&mSessionKey, &mSongFolder, &mDownloadFolder, this)
 {
 	ui.setupUi(this);
 
 	// Create the Media Player
 	mMediaPlayer = new MediaPlayer(&ui, this);
+	mStreamManager.mMediaPlayer = mMediaPlayer;
 
 	// Setting default folder to home/comm-audio
 	QDir tmp = QDir(QDir::homePath() + "/comm-audio");
@@ -170,7 +172,7 @@ void CommAudio::populateLocalSongsList()
 
 	// Add the list of widgets to tree
 	ui.treeLocalSongs->insertTopLevelItems(0, items);
-	mMediaPlayer->updateSongList(items);
+	mMediaPlayer->UpdateSongList(items);
 }
 
 QString CommAudio::getAddressFromUser()
@@ -451,14 +453,13 @@ void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
 {
 	QTcpSocket * socket = mConnections[item->text(1)];
 	QString songName = item->text(0);
-	qDebug() << "requesting stream for song" << songName << "from" << socket->peerAddress().toString();
+	mStreamManager.StreamSong(songName, socket->peerAddress().toIPv4Address());
 }
 
 void CommAudio::remoteSongDoubleClickedHandler(QTreeWidgetItem * item, int column)
 {
 	QTcpSocket * socket = mConnections[item->text(1)];
 	QString songName = item->text(0);
-	qDebug() << "requesting download for song" << songName << "from" << socket->peerAddress().toString();
 	mDownloadManager.DownloadFile(songName, socket->peerAddress().toIPv4Address());
 }
 
@@ -541,17 +542,6 @@ void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 	default:
 		break;
 	}
-}
-
-void CommAudio::startStreamingSong(QTcpSocket * sender, const QByteArray data)
-{
-	QByteArray packet = QByteArray(1, (char)Headers::RespondAudioStream);
-	//packet.append(mSessionKey);
-	//packet.resize(1 + KEY_SIZE);
-}
-
-void CommAudio::playStreamSong(const QByteArray Data)
-{
 }
 
 void CommAudio::requestForSongs(QTcpSocket * socket)

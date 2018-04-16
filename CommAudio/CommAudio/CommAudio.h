@@ -38,6 +38,7 @@
 #include "MediaPlayer.h"
 #include "VoipModule.h"
 #include "DownloadManager.h"
+#include "StreamManager.h"
 
 class CommAudio : public QMainWindow
 {
@@ -68,6 +69,7 @@ private:
 	VoipModule mVoip;
 	MediaPlayer * mMediaPlayer;
 	DownloadManager mDownloadManager;
+	StreamManager mStreamManager;
 
 	// Functions
 	QString getAddressFromUser();
