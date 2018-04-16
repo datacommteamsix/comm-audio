@@ -1,5 +1,9 @@
 #pragma once
 
+#define TITLE_DEFAULT	"CommAudio - No Session"
+#define TITLE_HOST		"CommAudio - Hosting Session"
+#define TITLE_CLIENT	"CommAudio - Connected To Host"
+
 #define DEFAULT_PORT	42069
 #define VOIP_PORT		42070
 #define DOWNLOAD_PORT	42071
