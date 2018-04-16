@@ -23,7 +23,7 @@ VoipModule::~VoipModule()
 
 void VoipModule::Start()
 {
-	mServer.listen(QHostAddress::Any, 42070);
+	mServer.listen(QHostAddress::Any, VOIP_PORT);
 }
 
 void VoipModule::Stop()
@@ -73,7 +73,7 @@ void VoipModule::newClientHandler(QHostAddress address)
 	connect(socket, &QTcpSocket::readyRead, this, &VoipModule::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &VoipModule::clientDisconnectHandler);
 
-	socket->connectToHost(address, 42070);
+	socket->connectToHost(address, VOIP_PORT);
 
 	mConnections[address.toIPv4Address()] = socket;
 	mInputs[address.toIPv4Address()] = new QAudioInput(mFormat, this);

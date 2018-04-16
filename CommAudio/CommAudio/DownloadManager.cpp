@@ -8,7 +8,7 @@ DownloadManager::DownloadManager(const QByteArray * key, QDir * source, QDir * d
 	, mServer(this)
 {
 	connect(&mServer, &QTcpServer::newConnection, this, &DownloadManager::newConnectionHandler);
-	mServer.listen(QHostAddress::AnyIPv4, 42071);
+	mServer.listen(QHostAddress::AnyIPv4, DOWNLOAD_PORT);
 }
 
 void DownloadManager::DownloadFile(QString songName, quint32 address)
@@ -17,7 +17,7 @@ void DownloadManager::DownloadFile(QString songName, quint32 address)
 	connect(socket, &QTcpSocket::readyRead, this, &DownloadManager::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &DownloadManager::disconnectHandler);
 
-	socket->connectToHost(QHostAddress(address), 42071);
+	socket->connectToHost(QHostAddress(address), DOWNLOAD_PORT);
 	mConnections[address] = socket;
 
 	mFiles[address] = new QFile(mDownloads->absoluteFilePath(songName));
@@ -26,7 +26,7 @@ void DownloadManager::DownloadFile(QString songName, quint32 address)
 	QByteArray request = QByteArray(1, (char)Headers::RequestDownload);
 	request.append(*mKey);
 	request.append(songName);
-	request.resize(1 + 32 + 255);
+	request.resize(1 + KEY_SIZE + SONGNAME_SIZE);
 
 	socket->write(request);
 
@@ -34,7 +34,7 @@ void DownloadManager::DownloadFile(QString songName, quint32 address)
 	connect(timer, &QTimer::timeout, this, &DownloadManager::timeoutHandler);
 
 	timer->address = address;
-	timer->start(5 * 1000);
+	timer->start(DOWNLOAD_TIMEOUT);
 
 	mTimers[address] = timer;
 }
@@ -61,7 +61,7 @@ void DownloadManager::incomingDataHandler()
 	}
 	else
 	{
-		QByteArray data = socket->read(1 + 32 + 255);
+		QByteArray data = socket->read(1 + KEY_SIZE + SONGNAME_SIZE);
 		if (data[0] == (char)Headers::RequestDownload)
 		{
 			uploadSong(data.mid(1), socket);
@@ -73,12 +73,12 @@ void DownloadManager::uploadSong(QByteArray data, QTcpSocket * socket)
 {
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	QFile file(mSource->absoluteFilePath(data.mid(32)));
+	QFile file(mSource->absoluteFilePath(data.mid(KEY_SIZE)));
 	file.open(QFile::ReadOnly);
 
 	while (!file.atEnd())
 	{
-		QByteArray packet = QByteArray(file.read(8192));
+		QByteArray packet = QByteArray(file.read(DOWNLOAD_CHUNCK_SIZE));
 		socket->write(packet);
 	}
 
@@ -88,7 +88,7 @@ void DownloadManager::uploadSong(QByteArray data, QTcpSocket * socket)
 void DownloadManager::writeToFile(QByteArray data, quint32 address)
 {
 	mTimers[address]->stop();
-	mTimers[address]->start(5 * 1000);
+	mTimers[address]->start(DOWNLOAD_TIMEOUT);
 
 	mFiles[address]->write(data);
 }
