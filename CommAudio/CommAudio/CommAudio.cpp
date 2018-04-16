@@ -73,10 +73,12 @@ CommAudio::CommAudio(QWidget * parent)
 	mSongFolder = tmp;
 	mDownloadFolder = tmp;
 
+	ui.treeRemoteSongs->setContextMenuPolicy(Qt::CustomContextMenu);
+
 	// Song Lists
 	connect(ui.treeLocalSongs, &QTreeWidget::itemClicked, this, &CommAudio::localSongClickedHandler);
 	connect(ui.treeRemoteSongs, &QTreeWidget::itemClicked, this, &CommAudio::remoteSongClickedHandler);
-	connect(ui.treeRemoteSongs, &QTreeWidget::itemDoubleClicked, this, &CommAudio::remoteSongDoubleClickedHandler);
+	connect(ui.treeRemoteSongs, &QTreeWidget::customContextMenuRequested, this, &CommAudio::remoteMenuHandler);
 
 	// Closing the application
 	connect(ui.actionExit, &QAction::triggered, this, &QWidget::close);
@@ -287,8 +289,8 @@ void CommAudio::joinSessionHandler()
 		return;
 	}
 
-	mConnections["Hard Coded Host Name"] = socket;
-	mIpToName[hostAddress.toIPv4Address()] = "Hard Coded Host Name";
+	mConnections[address] = socket;
+	mIpToName[hostAddress.toIPv4Address()] = address;
 	connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 
@@ -296,7 +298,7 @@ void CommAudio::joinSessionHandler()
 	socket->write(joinRequest);
 
 	QStringList host;
-	host << "Hard Coded Host Name" << "Host";
+	host << address << "Host";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
 	emit connectVoip(hostAddress);
@@ -456,11 +458,25 @@ void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
 	mStreamManager.StreamSong(songName, socket->peerAddress().toIPv4Address());
 }
 
-void CommAudio::remoteSongDoubleClickedHandler(QTreeWidgetItem * item, int column)
+void CommAudio::remoteMenuHandler(const QPoint & pos)
 {
-	QTcpSocket * socket = mConnections[item->text(1)];
-	QString songName = item->text(0);
-	mDownloadManager.DownloadFile(songName, socket->peerAddress().toIPv4Address());
+	nd = ui.treeLocalSongs->itemAt(pos);
+
+	QAction *newAct = new QAction(QIcon(":/Resource/warning32.ico"), tr("&Download"), this);
+	newAct->setStatusTip(tr("Download Song"));
+	connect(newAct, &QAction::triggered, this, &CommAudio::downloadSong);
+
+	QMenu menu(this);
+	menu.addAction(newAct);
+
+	QPoint pt(pos);
+	menu.exec(ui.treeLocalSongs->mapToGlobal(pos));
+}
+
+void CommAudio::downloadSong()
+{
+	QTcpSocket * socket = mConnections[nd->text(1)];
+	mDownloadManager.DownloadFile(nd->text(0), socket->peerAddress().toIPv4Address());
 }
 
 void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
@@ -508,9 +524,6 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 	case Headers::ReturnWithSongs:
 		displaySongName(data, sender);
 		break;
-	case Headers::RequestAudioStream:
-		startStreamingSong(sender, data);
-		break;
 	}
 }
 
@@ -535,9 +548,6 @@ void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 		break;
 	case Headers::ReturnWithSongs:
 		displaySongName(data, sender);
-		break;
-	case Headers::RespondAudioStream:
-		playStreamSong(data);
 		break;
 	default:
 		break;
