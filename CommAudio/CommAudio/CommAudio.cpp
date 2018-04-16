@@ -278,7 +278,6 @@ void CommAudio::leaveSessionHandler()
 	{
 		disconnect(socket, &QTcpSocket::disconnected, this, &CommAudio::remoteDisconnectHandler);
 		socket->close();
-		socket->deleteLater();
 	}
 
 	mConnections.clear();
