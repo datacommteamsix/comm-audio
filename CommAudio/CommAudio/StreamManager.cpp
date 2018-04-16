@@ -7,17 +7,8 @@ StreamManager::StreamManager(MediaPlayer * mediaplayer, const QByteArray * key, 
 	, mDownloads(downloads)
 	, mServer(this)
 	, mMediaPlayer(mediaplayer)
+	, mSongSource(0)
 {
-	QAudioFormat format;
-	// Set up the format, eg.
-	format.setSampleRate(44100);
-	format.setChannelCount(16);
-	format.setSampleSize(2);
-	format.setCodec("audio/pcm");
-	format.setByteOrder(QAudioFormat::LittleEndian);
-	format.setSampleType(QAudioFormat::UnSignedInt);
-	mplayer = new QAudioOutput(format, this);
-
 	connect(&mServer, &QTcpServer::newConnection, this, &StreamManager::newConnectionHandler);
 	mServer.listen(QHostAddress::AnyIPv4, STREAM_PORT);
 }
@@ -38,12 +29,12 @@ void StreamManager::disconnectHandler()
 	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	mConnections.take(address)->deleteLater();
-
-	if (mFiles.contains(address))
+	if (address == mSongSource)
 	{
-		mFiles.clear();
+		mMediaPlayer->Stop();
 	}
+
+	mConnections.take(address)->deleteLater();
 }
 
 void StreamManager::StreamSong(QString songName, quint32 address)
@@ -54,8 +45,7 @@ void StreamManager::StreamSong(QString songName, quint32 address)
 
 	socket->connectToHost(QHostAddress(address), STREAM_PORT);
 	mConnections[address] = socket;
-
-	mFiles[address] = true;
+	mSongSource = address;
 
 	QByteArray request = QByteArray(1, (char)Headers::RequestAudioStream);
 	request.append(*mKey);
@@ -63,14 +53,6 @@ void StreamManager::StreamSong(QString songName, quint32 address)
 	request.resize(1 + KEY_SIZE + SONGNAME_SIZE);
 
 	socket->write(request);
-
-	SocketTimer * timer = new SocketTimer(this);
-	connect(timer, &QTimer::timeout, this, &StreamManager::timeoutHandler);
-
-	timer->address = address;
-	timer->start(DOWNLOAD_TIMEOUT);
-
-	mTimers[address] = timer;
 }
 
 void StreamManager::incomingDataHandler()
@@ -78,14 +60,17 @@ void StreamManager::incomingDataHandler()
 	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	if (mFiles.contains(address))
+	if (address == mSongSource)
 	{
-		playSong(socket->readAll(), address);
+		if (mMediaPlayer->State() == MediaPlayer::StoppedState)
+		{
+			mMediaPlayer->StartStream(socket);
+		}
 	}
 	else
 	{
-		QByteArray data = socket->read(1 + KEY_SIZE + SONGNAME_SIZE);
-		if (data[0] == (char)Headers::RequestDownload)
+		QByteArray data = socket->readAll();
+		if (data[0] == (char)Headers::RequestAudioStream)
 		{
 			uploadSong(data.mid(1), socket);
 		}
@@ -94,8 +79,6 @@ void StreamManager::incomingDataHandler()
 
 void StreamManager::uploadSong(QByteArray data, QTcpSocket * socket)
 {
-	quint32 address = socket->peerAddress().toIPv4Address();
-
 	QFile file(mSource->absoluteFilePath(data.mid(KEY_SIZE)));
 	file.open(QFile::ReadOnly);
 
@@ -103,6 +86,7 @@ void StreamManager::uploadSong(QByteArray data, QTcpSocket * socket)
 	{
 		QByteArray packet = QByteArray(file.read(DOWNLOAD_CHUNCK_SIZE));
 		socket->write(packet);
+		socket->flush();
 	}
 
 	file.close();
@@ -110,22 +94,7 @@ void StreamManager::uploadSong(QByteArray data, QTcpSocket * socket)
 
 void StreamManager::playSong(QByteArray data, quint32 address)
 {
-	mTimers[address]->stop();
-	mTimers[address]->start(DOWNLOAD_TIMEOUT);
-
 	QBuffer *buffer = new QBuffer(&data);
 	buffer->open(QIODevice::ReadOnly);
 	qDebug() << data.size();
-	mplayer->start(buffer);
 }
-
-void StreamManager::timeoutHandler()
-{
-	SocketTimer * expiredTimer = (SocketTimer *)QObject::sender();
-	quint32 address = expiredTimer->address;
-
-	mTimers.take(address)->deleteLater();
-
-	mConnections.take(address)->close();
-}
-

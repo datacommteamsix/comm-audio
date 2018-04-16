@@ -25,25 +25,21 @@ private:
 	QDir * mSource;
 	QDir * mDownloads;
 
+	quint32 mSongSource;
 	QMap<quint32, QTcpSocket *> mConnections;
-	QMap<quint32, SocketTimer *> mTimers;
-	QMap<quint32, bool> mFiles;
 
 	QTcpServer mServer;
 	MediaPlayer * mMediaPlayer;
-	QAudioOutput * mplayer;
 
 	void uploadSong(QByteArray data, QTcpSocket * socket);
 	void playSong(QByteArray data, quint32 address);
 
-	private slots:
+private slots:
 	void newConnectionHandler();
 	void incomingDataHandler();
 	void disconnectHandler();
 
-	void timeoutHandler();
-
-	public slots:
+public slots:
 	void StreamSong(QString songName, quint32 address);
 
 };
