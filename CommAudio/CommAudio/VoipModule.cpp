@@ -14,27 +14,25 @@ VoipModule::VoipModule(QWidget * parent)
 
 	// Create the server to listen for new connections
 	connect(&mServer, &QTcpServer::newConnection, this, &VoipModule::newConnectionHandler);
-	mServer.listen(QHostAddress::Any, 42070);
 }
 
 VoipModule::~VoipModule()
 {
-	for (QAudioOutput * output : mOutputs)
-	{
-		output->stop();
-		output->deleteLater();
-	}
+	Stop();
+}
 
-	for (QAudioInput * input : mInputs)
-	{
-		input->stop();
-		input->deleteLater();
-	}
+void VoipModule::Start()
+{
+	mServer.listen(QHostAddress::Any, 42070);
+}
+
+void VoipModule::Stop()
+{
+	mServer.close();
 
 	for (QTcpSocket * socket : mConnections)
 	{
 		socket->close();
-		socket->deleteLater();
 	}
 }
 

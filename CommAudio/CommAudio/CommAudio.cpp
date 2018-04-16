@@ -58,7 +58,7 @@ CommAudio::CommAudio(QWidget * parent)
 	, mIpToName()
 	, mOwnerToSong()
 	, mConnectionManager(&mName, this)
-	//, mVoip(this)
+	, mVoip(this)
 	, mDownloadManager(&mSessionKey, &mSongFolder, &mDownloadFolder, this)
 {
 	ui.setupUi(this);
@@ -98,7 +98,7 @@ CommAudio::CommAudio(QWidget * parent)
 	connect(&mConnectionManager, &ConnectionManager::connectionAccepted, this, &CommAudio::newConnectionHandler);
 
 	// Connect signal for VoIP module
-	//connect(this, &CommAudio::connectVoip, &mVoip, &VoipModule::newClientHandler);
+	connect(this, &CommAudio::connectVoip, &mVoip, &VoipModule::newClientHandler);
 
 	mConnectionManager.Init(&mConnections);
 }
@@ -220,6 +220,7 @@ void CommAudio::hostSessionHandler()
 			break;
 		}
 	}
+
 	mSessionKey = hasher.result();
 
 	// Set host mode to true
@@ -227,12 +228,16 @@ void CommAudio::hostSessionHandler()
 
 	// Set the connection manager to host mode;
 	mConnectionManager.BecomeHost(mSessionKey);
+
+	mVoip.Start();
 }
 
 void CommAudio::joinSessionHandler()
 {
 	mIsHost = false;
 	mConnectionManager.BecomeClient();
+	mVoip.Start();
+
 	mSessionKey = QByteArray();
 
 	// Send Request to join session
@@ -258,7 +263,7 @@ void CommAudio::joinSessionHandler()
 	host << "Hard Coded Host Name" << "Host";
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
 
-	//emit connectVoip(QHostAddress(TEST_HOST_IP));
+	emit connectVoip(QHostAddress(TEST_HOST_IP));
 }
 
 void CommAudio::leaveSessionHandler()
@@ -266,7 +271,7 @@ void CommAudio::leaveSessionHandler()
 	//If you are a host
 	mConnectionManager.BecomeClient();
 
-	// Send notice of leave to all connected members
+	mVoip.Stop();
 
 	// Disconnect from all memebers
 	for (QTcpSocket * socket : mConnections)
@@ -596,7 +601,7 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 		QHostAddress qHostAddress = QHostAddress(addressInt);
 		QString address = qHostAddress.toString();
 
-		//emit connectVoip(qHostAddress);
+		emit connectVoip(qHostAddress);
 
 		QTcpSocket * socket = new QTcpSocket(this);
 		connect(socket, &QTcpSocket::readyRead, this, &CommAudio::incomingDataHandler);

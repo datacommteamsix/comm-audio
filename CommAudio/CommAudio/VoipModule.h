@@ -17,6 +17,9 @@ public:
 	VoipModule(QWidget * parent = nullptr);
 	~VoipModule();
 
+	void Start();
+	void Stop();
+
 private:
 	QAudioFormat mFormat;
 
