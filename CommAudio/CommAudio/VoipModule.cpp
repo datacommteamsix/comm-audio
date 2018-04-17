@@ -25,7 +25,7 @@
 --					Roger Zhang
 --
 -- NOTES:
--- TODO: Fill out
+--					This is the class that encapsulates all the voip funcitonality of the program.
 ----------------------------------------------------------------------------------------------------------------------*/
 #include <VoipModule.h>
 
