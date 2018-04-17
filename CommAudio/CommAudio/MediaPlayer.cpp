@@ -16,6 +16,12 @@ MediaPlayer::MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent)
 	mSongFormat->setByteOrder(QAudioFormat::LittleEndian);
 	mSongFormat->setSampleType(QAudioFormat::SignedInt);
 
+	QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+	if (!info.isFormatSupported(*mSongFormat)) {
+		qWarning() << "Raw audio format not supported by backend, cannot play audio.";
+		return;
+	}
+
 	mPlayer = new QAudioOutput(*mSongFormat, this);
 	mPlayer->setNotifyInterval(1000);
 	mPlayer->setVolume(1);
