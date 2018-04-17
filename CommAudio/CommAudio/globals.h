@@ -11,6 +11,7 @@
 
 #define CONNECT_TIMEOUT 5 * 1000
 
+#define USER_NAME_SIZE 33
 #define KEY_SIZE 32
 #define SONGNAME_SIZE 255
 

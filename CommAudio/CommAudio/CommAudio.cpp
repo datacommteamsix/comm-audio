@@ -302,9 +302,7 @@ void CommAudio::joinSessionHandler()
 	// Send data
 	socket->write(joinRequest);
 
-	QStringList host;
-	host << address << "Host";
-	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
+
 
 	emit connectVoip(hostAddress);
 	setWindowTitle(TITLE_CLIENT);
@@ -620,11 +618,15 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	// Grab session key
 	mSessionKey = data.mid(1, KEY_SIZE);
 
+	QStringList host;
+	host << data.mid(1 + KEY_SIZE, USER_NAME_SIZE) << "Host";
+	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, host));
+
 	// Grab the length
-	int length = (int)data[33];
+	int length = (int)data[1 + KEY_SIZE + USER_NAME_SIZE];
 
 	// Craft connect request
-	QByteArray joinRequest = QByteArray(1 + 32 + 33, (char)0);
+	QByteArray joinRequest = QByteArray(1 + KEY_SIZE + USER_NAME_SIZE, (char)0);
 	joinRequest[0] = (char)Headers::RequestToJoin;
 	joinRequest.replace(1, mSessionKey.size(), mSessionKey);
 	joinRequest.replace(1 + 32, mName.size(), mName.toStdString().c_str());
@@ -634,7 +636,6 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 
 	for (int i = 0; i < length; i++)
 	{
-		// TODO: Make sure this is reading address correctly
 		quint32 addressInt = -1;
 		QDataStream(data.mid(offset, 4)) >> addressInt;
 		QHostAddress qHostAddress = QHostAddress(addressInt);
