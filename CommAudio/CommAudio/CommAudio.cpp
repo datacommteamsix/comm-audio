@@ -265,8 +265,6 @@ void CommAudio::hostSessionHandler()
 void CommAudio::joinSessionHandler()
 {
 	leaveSessionHandler();
-	ui.actionHostSession->setDisabled(true);
-	ui.actionJoinSession->setDisabled(true);
 
 	mVoip.Start();
 
@@ -619,6 +617,8 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 void CommAudio::connectToAllOtherClients(const QByteArray data)
 {
 	setWindowTitle(TITLE_CLIENT);
+	ui.actionHostSession->setDisabled(true);
+	ui.actionJoinSession->setDisabled(true);
 
 	// Grab session key
 	mSessionKey = data.mid(1, KEY_SIZE);
@@ -683,15 +683,14 @@ void CommAudio::remoteDisconnectHandler()
 	mIpToName.remove(address);
 
 	//Delete the client songs
-	QList<QTreeWidgetItem*>* items = mOwnerToSong.value(clientName, NULL);
+	QList<QTreeWidgetItem*>* items = mOwnerToSong.take(clientName);
 
-	if (items)
+	for (int i = 0; i < items->size(); i++)
 	{
-		for (int i = 0; i < items->size(); i++)
-		{
-			delete items->value(i);
-		}
+		delete items->at(i);
 	}
+
+	delete items;
 
 	//delete the socket
 	sender->deleteLater();

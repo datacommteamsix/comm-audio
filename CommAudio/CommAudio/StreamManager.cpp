@@ -12,6 +12,16 @@ StreamManager::StreamManager(const QByteArray * key, QDir * source, QDir * downl
 	mServer.listen(QHostAddress::AnyIPv4, STREAM_PORT);
 }
 
+StreamManager::~StreamManager()
+{
+	QList<quint32> keys = mConnections.keys();
+
+	for (int i = 0; i < keys.size(); i++)
+	{
+		mConnections[keys[i]]->close();
+	}
+}
+
 void StreamManager::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
@@ -27,9 +37,9 @@ void StreamManager::disconnectHandler()
 	QTcpSocket * socket = (QTcpSocket *)QObject::sender();
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	if (address == mSongSource)
+	if (mSongSource == address)
 	{
-		mMediaPlayer->Stop();
+		mSongSource = 0;
 	}
 
 	mConnections.take(address)->deleteLater();
@@ -37,6 +47,11 @@ void StreamManager::disconnectHandler()
 
 void StreamManager::StreamSong(QString songName, quint32 address)
 {
+	if (mConnections.contains(address))
+	{
+		return;
+	}
+
 	QTcpSocket * socket = new QTcpSocket(this);
 	connect(socket, &QTcpSocket::readyRead, this, &StreamManager::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &StreamManager::disconnectHandler);
