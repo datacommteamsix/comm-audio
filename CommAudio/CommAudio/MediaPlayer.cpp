@@ -100,9 +100,9 @@ void MediaPlayer::SetSong(QString absoluteFilename)
 	mSourceType = SourceType::Song;
 }
 
-void MediaPlayer::StartStream(QTcpSocket * socket)
+void MediaPlayer::StartStream(QIODevice * stream)
 {
-	mStream = socket;
+	mStream = stream;
 	mPlayer->stop();
 	mPlayer->start(mStream);
 	mState = PlayerState::PlayingState;
@@ -142,10 +142,8 @@ void MediaPlayer::Stop()
 	}
 	else
 	{
-		if (mStream)
-		{
-			mStream->close();
-		}
+		mStream->close();
+		delete mStream;
 	}
 }
 

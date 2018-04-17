@@ -28,7 +28,7 @@ public:
 	~MediaPlayer();
 
 	void SetSong(QString absoluteFileName);
-	void StartStream(QTcpSocket * socket);
+	void StartStream(QIODevice * stream);
 	void SetDirAndSong(QDir songDir, QTreeWidgetItem *currSong);
 	void UpdateSongList(QList<QTreeWidgetItem *> songList);
 
@@ -55,7 +55,7 @@ private:
 	WavHeader * mSongHeader;
 	QAudioFormat * mSongFormat;
 	QFile * mSong;
-	QTcpSocket * mStream;
+	QIODevice * mStream;
 	QTreeWidgetItem * mCurrentSong = NULL;
 
 	QAudioOutput * mPlayer;

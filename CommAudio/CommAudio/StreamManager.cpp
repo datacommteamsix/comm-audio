@@ -43,6 +43,7 @@ void StreamManager::disconnectHandler()
 	}
 
 	mConnections.take(address)->deleteLater();
+	mBuffers.remove(address);
 }
 
 void StreamManager::StreamSong(QString songName, quint32 address)
@@ -59,6 +60,9 @@ void StreamManager::StreamSong(QString songName, quint32 address)
 	socket->connectToHost(QHostAddress(address), STREAM_PORT);
 	mConnections[address] = socket;
 	mSongSource = address;
+
+	mBuffers[address] = new QBuffer(this);
+	mBuffers[address]->open(QIODevice::ReadWrite);
 
 	QByteArray request = QByteArray(1, (char)Headers::RequestAudioStream);
 	request.append(*mKey);
@@ -77,10 +81,11 @@ void StreamManager::incomingDataHandler()
 
 	if (address == mSongSource)
 	{
+		mBuffers[address]->buffer().append(socket->readAll());
 		if (mMediaPlayer->State() == MediaPlayer::StoppedState)
 		{
 			qDebug() << "Starting stream";
-			mMediaPlayer->StartStream(socket);
+			mMediaPlayer->StartStream(mBuffers[address]);
 		}
 	}
 	else
