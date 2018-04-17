@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QDebug>
-
 #include <QAction>
+#include <QAudioFormat>
+#include <QAudioOutput>
 #include <QByteArray>
 #include <QCryptographicHash>
+#include <QDataStream>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -13,10 +14,11 @@
 #include <QInputDialog>
 #include <QList>
 #include <QMap>
-#include <QMediaPlayer>
+#include <QMessageBox>
 #include <QNetworkInterface>
 #include <QPoint>
 #include <QPushButton>
+#include <QRegExp>
 #include <QSlider>
 #include <QString>
 #include <QStringList>
@@ -28,7 +30,12 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_CommAudio.h"
 
-#define SUPPORTED_FORMATS { "*.wav", "*.mp3" }
+#include "ConnectionManager.h"
+#include "globals.h"
+#include "MediaPlayer.h"
+#include "VoipModule.h"
+#include "DownloadManager.h"
+#include "StreamManager.h"
 
 class CommAudio : public QMainWindow
 {
@@ -40,43 +47,46 @@ public:
 
 private:
 	// Variables
-	enum Headers
-	{
-		RequestToJoin,
-		AcceptJoin,
-		RequestForSongs,
-		RespondWithSongs,
-		RequestAudioStream,
-		RequestDownload,
-		RequestUpload,
-		NotifyQuit
-	};
-
 	Ui::CommAudioClass ui;
 
 	bool mIsHost;
 	QString mName;
 	QByteArray mSessionKey;
+	QTreeWidgetItem *nd;
 
 	QDir mSongFolder;
 	QDir mDownloadFolder;
+	QList<QTreeWidgetItem *> items;
 
-	QMediaPlayer * mPlayer;
-
-	QTcpServer mServer;
-
-	QMap<QString, QTcpSocket *> mPendingConnections;
 	QMap<QString, QTcpSocket *> mConnections;
+	QMap<quint32, QString> mIpToName;
+	QMap<QString, QList<QTreeWidgetItem*>*> mOwnerToSong;
+
+	// Components
+	ConnectionManager mConnectionManager;
+	VoipModule mVoip;
+	MediaPlayer * mMediaPlayer;
+	DownloadManager mDownloadManager;
+	StreamManager mStreamManager;
 
 	// Functions
-	void populateLocalSongsList();
-	void loadSong(const QString songname);
+	QString getAddressFromUser();
 
-	void parsePacketHost(const QTcpSocket * sender, const QByteArray data);
-	void parsePacketClient(const QTcpSocket * sender, const QByteArray data);
+	void populateLocalSongsList();
+
+	void parsePacketHost(QTcpSocket * sender, const QByteArray data);
+	void parsePacketClient(QTcpSocket * sender, const QByteArray data);
+
+	void connectToAllOtherClients(const QByteArray data);
+	void displayClientName(const QByteArray data, QTcpSocket * sender);
+	void displaySongName(const QByteArray data, QTcpSocket * sender);
+
+	void requestForSongs(QTcpSocket * host);
+	void sendSongList(QTcpSocket * sender);
+	void returnSongList(QTcpSocket * sender);
 
 private slots:
-	// UI
+	// Menu Bar 
 	void hostSessionHandler();
 	void joinSessionHandler();
 	void leaveSessionHandler();
@@ -85,19 +95,18 @@ private slots:
 	void changeSongFolderHandler();
 	void changeDownloadFolderHandler();
 
-	void playSongButtonHandler();
-	void prevSongButtonHandler();
-	void nextSongButtonHandler();
-
-	void seekPositionHandler(int position);
-
-	void songStateChangeHandler(QMediaPlayer::State state);
-	void songProgressHandler(qint64 ms);
-	void songDurationHandler(qint64 ms);
-
+	// Song Lists
 	void localSongClickedHandler(QTreeWidgetItem * item, int column);
+	void remoteSongClickedHandler(QTreeWidgetItem * item, int column);
+	void remoteMenuHandler(const QPoint & pos);
+	void downloadSong();
 
 	// Networking
-	void newConnectionHandler();
+	void newConnectionHandler(QString name, QTcpSocket * socket);
 	void incomingDataHandler();
+	void remoteDisconnectHandler();
+
+signals:
+	void connectVoip(QHostAddress address);
+
 };
