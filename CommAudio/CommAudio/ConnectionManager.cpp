@@ -1,5 +1,60 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE:		ConnectionManager.cpp - This is a manager for new connections.
+--
+-- PROGRAM:			CommAudio
+--
+-- FUNCTIONS:
+--					ConnectionManager(QByteArray * key, QString * name, QWidget * parent = nullptr)
+--					~ConnectionManager()
+--					void Init(QMap<QString, QTcpSocket *> * connectedClients)
+--					void BecomeHost()
+--					void BecomeClient()
+--					void AddPendingConnection(const quint32 address, QTcpSocket * socket)
+--					void startServerListen()
+--					void sendListOfClients(QTcpSocket * socket)
+--					void sendName(QTcpSocket * socket)
+--					void parseJoinRequest(const QByteArray data, QTcpSocket * socket)
+--					void newConnectionHandler()
+--					void incomingDataHandler()
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- NOTES:
+--					This class encapsulates all the logic for accepting and validating new connections to the session.
+----------------------------------------------------------------------------------------------------------------------*/
 #include "ConnectionManager.h"
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		ConnecitonManager
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		ConnectionManager (QByteArray * key, QString * name, QWidget * parent)
+--						QByteArray * key: A reference to the session key.
+--						QString * name: A reference to the name of the client.
+--						QWidget * parent: A reference to the QWidget parent.
+--
+-- RETURNS:			N/A
+--
+-- NOTES:
+--					The contstructor for the ConnectionManager. 
+----------------------------------------------------------------------------------------------------------------------*/
 ConnectionManager::ConnectionManager(QByteArray * key, QString * name, QWidget * parent)
 	: QWidget(parent)
 	, mName(name)
@@ -9,6 +64,26 @@ ConnectionManager::ConnectionManager(QByteArray * key, QString * name, QWidget *
 {
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		~ConnecitonManager
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		~ConnectionManager ()
+--
+-- RETURNS:			N/A
+--
+-- NOTES:
+--					The deconstructor for ConnectionManager. THis is where all the remaining connections are closed.
+----------------------------------------------------------------------------------------------------------------------*/
 ConnectionManager::~ConnectionManager()
 {
 	for (QTcpSocket * socket : mPendingConnections)
@@ -18,35 +93,158 @@ ConnectionManager::~ConnectionManager()
 	}
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		~ConnecitonManager
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		~ConnectionManager ()
+--
+-- RETURNS:			N/A
+--
+-- NOTES:
+--					The deconstructor for ConnectionManager. THis is where all the remaining connections are closed.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::Init(QMap<QString, QTcpSocket *> * connectedClients)
 {
 	mConnectedClients = connectedClients;
 	startServerListen();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		BecomeHost
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		BecomeHost ()
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					Sets the ConnectionManager to host mode.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::BecomeHost()
 {
 	mIsHost = true;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		BecomeClient
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		BecomeClient ()
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					Sets the ConnectionManager to client mode.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::BecomeClient()
 {
 	mIsHost = false;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		AddPendingConnection
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		AddPendingConnection (const quint32 address, QTcpSocket * socket)
+--						const quint32 address: The address of the pending conneciton.
+--						QTcpSocket * socket: The socket of the pending connection.
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					Saves the new pending connection to the map of pending connections.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::AddPendingConnection(const quint32 address, QTcpSocket * socket)
 {
-	assert(socket != nullptr);
 	mPendingConnections[address] = socket;
 	connect(socket, &QTcpSocket::readyRead, this, &ConnectionManager::incomingDataHandler);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		startServerListen
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		startServerListen ()
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					Starts the server by entering the TCP listen state.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::startServerListen()
 {
 	connect(&mServer, &QTcpServer::newConnection, this, &ConnectionManager::newConnectionHandler);
 	mServer.listen(QHostAddress::Any, 42069);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		sendListofClients
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		sendListOfClients (QTcpSocket * socket)
+--						QTcpSocket * socket: The socket to send the list of clients.
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					Creates a packet containin the name of this host as well as a list of Ip addresses of all connected
+--					clients in the sesison to the socket.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 {
 	QByteArray packet = QByteArray(1, (char)Headers::RespondToJoin);
@@ -71,15 +269,32 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 		{
 			packet << connection->peerAddress().toIPv4Address();
 		}
-		else
-		{
-			qDebug() << "Sending" << connection->peerAddress().toString() << "would be redudntant so skipping";
-		}
 	}
 
 	socket->write(packet);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		sendName
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		sendName (QTcpSocket * socket)
+--						QTcpSocket * socket: The socket to send the list of clients.
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					Sends the name of this socket to the socket.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::sendName(QTcpSocket * socket)
 {
 	// Create packet
@@ -91,6 +306,27 @@ void ConnectionManager::sendName(QTcpSocket * socket)
 	socket->write(packet);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		newConnectionHandler
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		newConnectionHandler ()
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when the TCP server acecpts a new conneciton. That connection
+--					is added to a map of pending connections.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::newConnectionHandler()
 {
 	QTcpSocket * socket = mServer.nextPendingConnection();
@@ -100,18 +336,37 @@ void ConnectionManager::newConnectionHandler()
 	mPendingConnections[address] = socket;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		incomingDataHandler
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		incomingDataHandler ()
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when there is new data on a socket. The data is read and if it
+--					is a request to join the request is then parsed.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::incomingDataHandler()
 {
 	quint32 sender = ((QTcpSocket *)QObject::sender())->peerAddress().toIPv4Address();
 	QTcpSocket * socket = mPendingConnections.take(sender);
-	assert(socket != nullptr);
 
 	QByteArray data = socket->readAll();
 
 	// Check if incoming data is a valid request to join packet
 	if (data.size() != 1 + USER_NAME_SIZE)
 	{
-		qDebug() << "Expecting request to join packet of length" << 1 + USER_NAME_SIZE << "but packet of size" << data.size() << "was received";
 		return;
 	}
 
@@ -121,12 +376,38 @@ void ConnectionManager::incomingDataHandler()
 		parseJoinRequest(data, socket);
 		break;
 	default:
-		qDebug() << "Invalid header received";
 		break;
 	}
 	
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		parseJoinRequest
+--
+-- DATE:			April 14, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		parseJoinRequset (const QByteArray data, QTcpSocket * socket)
+--						const QByteArray data: The data to be parsed.
+--						QTcpSocket * socket: The socket that the data was read from.
+--
+-- RETURNS:			void.
+--
+-- NOTES:
+--					The request to join is parsed. First if the socket is already connected the request is ignored.
+--					Also, if there are already 10 people in this session (including the host) the connection will
+--					be ignored. Otherwise if the ConnectionManager is in host mode, the new connection saved and a list
+--					of currently connected clients is sent in response. If the ConnectionManager is in client mode, 
+--					the key of the incoming request is compared to the one that is stored in memory, if the keys match
+--					then the client responds with its name.
+----------------------------------------------------------------------------------------------------------------------*/
 void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * socket)
 {
 	// Grab the name of the client
@@ -134,11 +415,15 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 	QString clientName = QString(data.mid(1));
 	quint32 pendingAddress = socket->peerAddress().toIPv4Address();
 
+	if (mConnectedClients->size() > 9)
+	{
+		return;
+	}
+
 	for (QTcpSocket * s : *mConnectedClients)
 	{
 		if (s->peerAddress().toIPv4Address() == pendingAddress)
 		{
-			qDebug() << clientName << "-" << "is already connected";
 			socket->close();
 			socket->deleteLater();
 			isAlreadyConnected = true;
