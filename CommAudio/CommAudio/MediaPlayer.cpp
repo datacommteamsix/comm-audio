@@ -325,8 +325,11 @@ void MediaPlayer::Stop()
 	}
 	else
 	{
-		mStream->close();
-		delete mStream;
+		if (mStream != nullptr)
+		{
+			mStream->close();
+			delete mStream;
+		}
 	}
 }
 
