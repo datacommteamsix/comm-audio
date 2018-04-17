@@ -202,33 +202,45 @@ void MediaPlayer::playSongButtonHandler()
 //Roger
 void MediaPlayer::prevSongButtonHandler()
 {
-	if (songList.size() == 0)
+	if (mSourceType == SourceType::Stream)
 	{
 		return;
 	}
+	else {
+		if (songList.size() == 0)
+		{
+			return;
+		}
 
-	int index = songList.indexOf(mCurrentSong);
-	index -= 1;
-	if (index < 0) { index = songList.size() - 1; }
-	mCurrentSong = songList[index];
-	SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
-	Play();
+		int index = songList.indexOf(mCurrentSong);
+		index -= 1;
+		if (index < 0) { index = songList.size() - 1; }
+		mCurrentSong = songList[index];
+		SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
+		Play();
+	}
 }
 
 //Roger
 void MediaPlayer::nextSongButtonHandler()
 {
-	if (songList.size() == 0)
+	if (mSourceType == SourceType::Stream)
 	{
 		return;
 	}
-	
-	int index = songList.indexOf(mCurrentSong);
-	index += 1;
-	if (index > songList.size() - 1) { index = 0; }
-	mCurrentSong = songList[index];
-	SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
-	Play();
+	else {
+		if (songList.size() == 0)
+		{
+			return;
+		}
+
+		int index = songList.indexOf(mCurrentSong);
+		index += 1;
+		if (index > songList.size() - 1) { index = 0; }
+		mCurrentSong = songList[index];
+		SetSong(mCurrentDir.absoluteFilePath(mCurrentSong->text(0)));
+		Play();
+	}
 }
 
 //Roger
