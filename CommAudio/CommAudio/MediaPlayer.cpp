@@ -563,15 +563,14 @@ void MediaPlayer::UpdateSongList(QList<QTreeWidgetItem *> items)
 --
 -- PROGRAMMER:		Benny Wang
 --
--- INTERFACE:		MediaPlayer::seekPositionHandler (int position)
+-- INTERFACE:		seekPositionHandler (int position)
 --						int position: The new position in the song.
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the user moves the position slider for the song.
---
--- This function will cause the QMediaPlayer to seek to the new position in the song.
+--					This is a Qt slot that is triggered when the user moves the position slider for the song. This 
+--					function will cause the QMediaPlayer to seek to the new position in the song.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MediaPlayer::seekPositionHandler(int position)
 {
@@ -594,15 +593,14 @@ void MediaPlayer::seekPositionHandler(int position)
 --
 -- PROGRAMMER:		Benny Wang
 --
--- INTERFACE:		MediaPlayer::songStateChangedHandler (QMediaPLayer::State state)
+-- INTERFACE:		songStateChangedHandler (QMediaPLayer::State state)
 --						QMediaPlayer::State state: The state of the media player.
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the state of the media player changes.
---
--- Elements of the GUI that are tied to the state of the media player will be updated to the new state.
+--					This is a Qt slot that is triggered when the state of the media player changes. Elements of the
+--					GUI that are tied to the state of the media player will be updated to the new state.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MediaPlayer::songStateChangeHandler(QAudio::State state)
 {

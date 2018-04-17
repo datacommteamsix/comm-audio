@@ -216,8 +216,6 @@ void StreamManager::StreamSong(QString songName, quint32 address)
 	request.resize(1 + KEY_SIZE + SONGNAME_SIZE);
 
 	socket->write(request);
-
-	qDebug() << "Requseting stream";
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -254,7 +252,6 @@ void StreamManager::incomingDataHandler()
 		mBuffers[address]->buffer().append(socket->readAll());
 		if (mMediaPlayer->State() == MediaPlayer::StoppedState)
 		{
-			qDebug() << "Starting stream";
 			mMediaPlayer->StartStream(mBuffers[address]);
 		}
 	}
