@@ -86,12 +86,18 @@ DownloadManager::DownloadManager(const QByteArray * key, QDir * source, QDir * d
 ----------------------------------------------------------------------------------------------------------------------*/
 void DownloadManager::DownloadFile(QString songName, quint32 address)
 {
+	if (mConnections.contains(address))
+	{
+		return;
+	}
+
 	QTcpSocket * socket = new QTcpSocket(this);
+
+	mConnections[address] = socket;
+
 	connect(socket, &QTcpSocket::readyRead, this, &DownloadManager::incomingDataHandler);
 	connect(socket, &QTcpSocket::disconnected, this, &DownloadManager::disconnectHandler);
-
 	socket->connectToHost(QHostAddress(address), DOWNLOAD_PORT);
-	mConnections[address] = socket;
 
 	mFiles[address] = new QFile(mDownloads->absoluteFilePath(songName));
 	mFiles[address]->open(QFile::WriteOnly);
