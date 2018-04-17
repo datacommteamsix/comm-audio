@@ -6,6 +6,7 @@ MediaPlayer::MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent)
 	, mSongFormat(new QAudioFormat())
 	, mSong(new QFile())
 	, mState(PlayerState::StoppedState)
+	, mStream(nullptr)
 {
 	memset(mSongHeader, 0, sizeof(WavHeader));
 
@@ -101,8 +102,9 @@ void MediaPlayer::SetSong(QString absoluteFilename)
 
 void MediaPlayer::StartStream(QTcpSocket * socket)
 {
+	mStream = socket;
 	mPlayer->stop();
-	mPlayer->start(socket);
+	mPlayer->start(mStream);
 	mState = PlayerState::PlayingState;
 	mSourceType = SourceType::Stream;
 }
@@ -131,13 +133,20 @@ void MediaPlayer::Pause()
 
 void MediaPlayer::Stop()
 {
+	mPlayer->stop();
+	mState = PlayerState::StoppedState;
+
 	if (mSourceType == SourceType::Song)
 	{
 		mSong->seek(0);
 	}
-
-	mPlayer->stop();
-	mState = PlayerState::StoppedState;
+	else
+	{
+		if (mStream)
+		{
+			mStream->close();
+		}
+	}
 }
 
 MediaPlayer::PlayerState MediaPlayer::State()

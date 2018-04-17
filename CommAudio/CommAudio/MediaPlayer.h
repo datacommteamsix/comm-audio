@@ -55,6 +55,7 @@ private:
 	WavHeader * mSongHeader;
 	QAudioFormat * mSongFormat;
 	QFile * mSong;
+	QTcpSocket * mStream;
 	QTreeWidgetItem * mCurrentSong = NULL;
 
 	QAudioOutput * mPlayer;

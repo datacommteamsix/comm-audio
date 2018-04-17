@@ -265,8 +265,6 @@ void CommAudio::hostSessionHandler()
 void CommAudio::joinSessionHandler()
 {
 	leaveSessionHandler();
-	ui.actionHostSession->setDisabled(true);
-	ui.actionJoinSession->setDisabled(true);
 
 	mVoip.Start();
 
@@ -619,6 +617,8 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 void CommAudio::connectToAllOtherClients(const QByteArray data)
 {
 	setWindowTitle(TITLE_CLIENT);
+	ui.actionHostSession->setDisabled(true);
+	ui.actionJoinSession->setDisabled(true);
 
 	// Grab session key
 	mSessionKey = data.mid(1, KEY_SIZE);

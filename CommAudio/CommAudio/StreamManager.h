@@ -17,7 +17,7 @@ class StreamManager : public QWidget
 
 public:
 	StreamManager(const QByteArray * key, QDir * source, QDir * downloads, QWidget * parent = nullptr);
-	~StreamManager() = default;
+	~StreamManager();
 
 	MediaPlayer * mMediaPlayer;
 
