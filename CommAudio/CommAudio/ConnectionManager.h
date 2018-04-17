@@ -1,9 +1,5 @@
 #pragma once
 
-#include <assert.h>
-
-#include <QDebug>
-
 #include <QByteArray>
 #include <QDataStream>
 #include <QHostAddress>

@@ -4,7 +4,29 @@
 -- PROGRAM:			CommAudio
 --
 -- FUNCTIONS:
---
+--					QString getAddressFromUser()
+--					void populateLocalSongsList()
+--					void parsePacketHost(QTcpSocket * sender, const QByteArray data)
+--					void parsePacketClient(QTcpSocket * sender, const QByteArray data)
+--					void connectToAllOtherClients(const QByteArray data)
+--					void displayClientName(const QByteArray data, QTcpSocket * sender)
+--					void displaySongName(const QByteArray data, QTcpSocket * sender)
+--					void requestForSongs(QTcpSocket * host)
+--					void sendSongList(QTcpSocket * sender)
+--					void returnSongList(QTcpSocket * sender)
+--					void hostSessionHandler()
+--					void joinSessionHandler()
+--					void leaveSessionHandler()
+--					void changeNameHandler()
+--					void changeSongFolderHandler()
+--					void changeDownloadFolderHandler()
+--					void localSongClickedHandler(QTreeWidgetItem * item, int column)
+--					void remoteSongClickedHandler(QTreeWidgetItem * item, int column)
+--					void remoteMenuHandler(const QPoint & pos)
+--					void downloadSong()
+--					void newConnectionHandler(QString name, QTcpSocket * socket)
+--					void incomingDataHandler()
+--					void remoteDisconnectHandler()
 --
 -- DATE:			March 26, 2018
 --
@@ -19,7 +41,7 @@
 --					Roger Zhang
 --
 -- NOTES:
--- TODO: Fill out
+--					This is the parent window class for the application.
 ----------------------------------------------------------------------------------------------------------------------*/
 #include "CommAudio.h"
 
@@ -42,12 +64,10 @@
 -- RETURNS:			N/A
 --
 -- NOTES:
--- The constructor for the main window of the program. This constructor also acts as the main entry point of the program
--- in place of main(int argc, char * argv[]).
---
--- All slots of objects present during the start of the program are connected here.
---
--- Lastly, this is where the program also starts listening for tcp connections.
+--					The constructor for the main window of the program. This constructor also acts as the main entry 
+--					point of the program in place of main(int argc, char * argv[]). All slots of objects present during 
+--					the start of the program are connected here. Lastly, this is where the program also starts listening
+--					for tcp connections.
 ----------------------------------------------------------------------------------------------------------------------*/
 CommAudio::CommAudio(QWidget * parent)
 	: QMainWindow(parent)
@@ -126,8 +146,8 @@ CommAudio::CommAudio(QWidget * parent)
 -- RETURNS:			N/A
 --
 -- NOTES:
--- Deconstructor for the main window of the program. This is where fill clean up of all resources used by the program
--- takes place.
+--					Deconstructor for the main window of the program. This is where fill clean up of all resources used 
+--					by the program takes place.
 ----------------------------------------------------------------------------------------------------------------------*/
 CommAudio::~CommAudio()
 {
@@ -142,7 +162,7 @@ CommAudio::~CommAudio()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::populateLocalSongsList
+-- FUNCTION:		populateLocalSongsList
 --
 -- DATE:			March 26, 2018
 --
@@ -153,14 +173,16 @@ CommAudio::~CommAudio()
 --					Roger Zhang
 --
 -- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
 --
--- INTERFACE:		CommAudio::populateLocalSongsList ()
+-- INTERFACE:		populateLocalSongsList ()
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This function grabs all the songs in the local songs folder that are encoded in one of the supported formats and
--- displays them in the local song list tree view.
+--					This function grabs all the songs in the local songs folder that are encoded in one of the supported 
+--					formats and displays them in the local song list tree view.
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::populateLocalSongsList()
 {
@@ -180,6 +202,27 @@ void CommAudio::populateLocalSongsList()
 	mMediaPlayer->UpdateSongList(items);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		getAddressFromUser
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		getAddressFromUser ()
+--
+-- RETURNS:			The string the user gives if it is a valid dotted decimal address, otherwise an empty string is returned.
+--
+-- NOTES:
+--					Creates a pop up box that asks the user for an ip address then checks the give address against a
+--					regex that checks for dotted decimal format. Values of the numbers are not checked.
+----------------------------------------------------------------------------------------------------------------------*/
 QString CommAudio::getAddressFromUser()
 {
 	bool ok;
@@ -198,7 +241,7 @@ QString CommAudio::getAddressFromUser()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::hostSessionHandler
+-- FUNCTION:		hostSessionHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -209,16 +252,17 @@ QString CommAudio::getAddressFromUser()
 --					Roger Zhang
 --
 -- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
 --
--- INTERFACE:		CommAudio::hostSessionHandler ()
+-- INTERFACE:		hostSessionHandler ()
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the user selects the menu item to become a host.
---
--- A SHA3 256 byte array is generated and saved to be used as the current sessio key and the application is switched
--- into host mode by setting mIsHost to true.
+--					This is a Qt slot that is triggered when the user selects the menu item to become a host. A SHA3 
+--					256 byte array is generated and saved to be used as the current sessio key and the application is 
+--					switched into host mode by setting mIsHost to true.
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::hostSessionHandler()
 {
@@ -262,6 +306,31 @@ void CommAudio::hostSessionHandler()
 	setWindowTitle(TITLE_HOST);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		joinSessionHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- INTERFACE:		joinSessionHandler ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when the user selects the menu item to become a host. A SHA3 
+--					256 byte array is generated and saved to be used as the current sessio key and the application is 
+--					switched into host mode by setting mIsHost to true. Lastly, a connection the the given host address
+--					is made if the input was valid.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::joinSessionHandler()
 {
 	leaveSessionHandler();
@@ -273,8 +342,6 @@ void CommAudio::joinSessionHandler()
 	joinRequest[0] = (char)Headers::RequestToJoin;
 	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
 	joinRequest.resize(1 + 33);
-
-	assert(joinRequest.size() == 1 + 33);
 
 	// Create connection
 	QString address = getAddressFromUser();
@@ -307,6 +374,29 @@ void CommAudio::joinSessionHandler()
 	emit connectVoip(hostAddress);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		leaveSessionHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- INTERFACE:		leaveSessionHandler ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Leaves the current session and sets the state of all components in the application the the default
+--					state.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::leaveSessionHandler()
 {
 	ui.actionHostSession->setDisabled(false);
@@ -335,7 +425,7 @@ void CommAudio::leaveSessionHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::changeNameHandler
+-- FUNCTION:		changeNameHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -347,15 +437,14 @@ void CommAudio::leaveSessionHandler()
 --
 -- PROGRAMMER:		Benny Wang
 --
--- INTERFACE:		CommAudio::changeNameHandler ()
+-- INTERFACE:		changeNameHandler ()
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the user selects the menu item to change their name.
---
--- A message box is shown to the user to enter a new name. That name is then saved and used for communication with
--- other clients.
+--					This is a Qt slot that is triggered when the user selects the menu item to change their name. A 
+--					message box is shown to the user to enter a new name. That name is then saved and used for 
+--					communication with other clients.
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::changeNameHandler()
 {
@@ -363,7 +452,7 @@ void CommAudio::changeNameHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::changeSongFolderHandler
+-- FUNCTION:		changeSongFolderHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -375,16 +464,15 @@ void CommAudio::changeNameHandler()
 --
 -- PROGRAMMER:		Benny Wang
 --
--- INTERFACE:		CommAudio::changeSongFolderHandler ()
+-- INTERFACE:		changeSongFolderHandler ()
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the user selects the menu item to change the local song folder.
---
--- A file browser is shown to the user to select a new directory. Once a new directory is selected, the directory is
--- saved and the local songs tree view is populated with all the songs in that folder that are in a supported format.
--- This folder can be the same as the download folder.
+--					This is a Qt slot that is triggered when the user selects the menu item to change the local song folder.
+--					A file browser is shown to the user to select a new directory. Once a new directory is selected, the
+--					directory is saved and the local songs tree view is populated with all the songs in that folder that 
+--					are in a supported format.  This folder can be the same as the download folder.
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::changeSongFolderHandler()
 {
@@ -398,7 +486,7 @@ void CommAudio::changeSongFolderHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::changeDownloadFolderHandler
+-- FUNCTION:		changeDownloadFolderHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -410,15 +498,14 @@ void CommAudio::changeSongFolderHandler()
 --
 -- PROGRAMMER:		Benny Wang
 --
--- INTERFACE:		CommAudio::changeSongFolderHandler ()
+-- INTERFACE:		changeSongFolderHandler ()
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the user selects the menu item to change the downlaod destination folder.
---
--- A file browser is shown to the user to select a new direcotry. That directory is then used as the new download
--- location. This folder can be the same as the local song folder.
+--					This is a Qt slot that is triggered when the user selects the menu item to change the downlaod 
+--					destination folder. A file browser is shown to the user to select a new direcotry. That directory 
+--					is then used as the new download location. This folder can be the same as the local song folder.
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::changeDownloadFolderHandler()
 {
@@ -430,7 +517,7 @@ void CommAudio::changeDownloadFolderHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::localSongClickedHandler
+-- FUNCTION:		localSongClickedHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -442,16 +529,16 @@ void CommAudio::changeDownloadFolderHandler()
 --
 -- PROGRAMMER:		Benny Wang
 --
--- INTERFACE:		CommAudio::localSongClickedHandler (QTreeWidgetItem * item, int column)
+-- INTERFACE:		localSongClickedHandler (QTreeWidgetItem * item, int column)
 --						QTreeWidgetItem * item: The QTreeWidgetItem that was clicked on.
 --						int column: The colomn that was clicked on.
 --
 -- RETURNS:			void.		
 --
 -- NOTES:
--- This is a Qt slot that is triggered when the user clicks on a song in the local songs list.
---
--- This function will grab the name of the song that was clicked on and set it as the current song in the QMediaPlayer.
+--					This is a Qt slot that is triggered when the user clicks on a song in the local songs list. This 
+--					function will grab the name of the song that was clicked on and set it as the current song in the
+--					MediaPlayer.
 ----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 {
@@ -459,6 +546,29 @@ void CommAudio::localSongClickedHandler(QTreeWidgetItem * item, int column)
 	mMediaPlayer->SetSong(mSongFolder.absoluteFilePath(item->text(0)));
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		remoteSongClickedHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		remoteSongCLickedHandler (QTreeWidgetItem * item, int column)
+--						QTreeWidgetItem * item: The QTreeWidgetItem that was clicked on.
+--						int column: The colomn that was clicked on.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when the user clicks on a song in the remote songs list. A request
+--					to stream that song is made to the owner of the song.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
 {
 	QTcpSocket * socket = mConnections[item->text(1)];
@@ -466,6 +576,29 @@ void CommAudio::remoteSongClickedHandler(QTreeWidgetItem * item, int column)
 	mStreamManager.StreamSong(songName, socket->peerAddress().toIPv4Address());
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		remoteMenuHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Roger Zhang
+--
+-- INTERFACE:		remoteMenuHandler (const QPoint & pos)
+--						const QPoint & pos: The point that was clicked on.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when the user right clicks on a song in the remote songs list. 
+--					A menu pops up where the only option is to download the song, if the user clicks on the download
+--					menu option, then a download request is triggered.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::remoteMenuHandler(const QPoint & pos)
 {
 	nd = ui.treeRemoteSongs->itemAt(pos);
@@ -481,18 +614,58 @@ void CommAudio::remoteMenuHandler(const QPoint & pos)
 	menu.exec(ui.treeRemoteSongs->mapToGlobal(pos));
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		downloadSong
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Roger Zhang
+--
+-- INTERFACE:		downloadSong ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Makes a download request for the song the user clicked on.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::downloadSong()
 {
 	QTcpSocket * socket = mConnections[nd->text(1)];
-	qDebug() << nd->text(0) << "-" << nd->text(1);
 	mDownloadManager.DownloadFile(nd->text(0), socket->peerAddress().toIPv4Address());
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		newConnectionHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		newConnectionHandler (QString name, QTcpSocket * socket)
+--						QString name: The name of the client.
+--						QTcpSocket * socket: The socket of the client.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when the ConnectionManager releases a new valid connection.
+--					That connection is then added the the list of valid connections and they are displayed on the GUI
+--					for the user.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 {
-	assert(socket != nullptr);
-	assert(!mConnections.contains(name));
-
 	//Insert name and ip to map
 	mIpToName.insert(socket->peerAddress().toIPv4Address(), name);
 
@@ -507,6 +680,27 @@ void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, client));
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		incomingDataHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		incomginDataHandler ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					This is a Qt slot that is triggered when there is data on one of the ports. The data is handled 
+--					depending on whether or not the application is currently in client mode or host mode.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::incomingDataHandler()
 {
 	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
@@ -522,6 +716,28 @@ void CommAudio::incomingDataHandler()
 	}
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		parsePacketHost
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- INTERFACE:		parsePacketHost ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Handles the incoming packet as a host based on the protocol.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 {
 	QHostAddress address = sender->peerAddress();
@@ -536,6 +752,28 @@ void CommAudio::parsePacketHost(QTcpSocket * sender, const QByteArray data)
 	}
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		parsePacketClient
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- INTERFACE:		parsePacketClient ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Handles the incoming packet as a host based on the protocol.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 {
 	switch (data[0])
@@ -563,6 +801,29 @@ void CommAudio::parsePacketClient(QTcpSocket * sender, const QByteArray data)
 	}
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		requestForSongs
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- INTERFACE:		requestForSongs (QTcpSocket * socket)
+--						QTcpSocket * socket: The socket to request from.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Makes a request for songs to the socket.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::requestForSongs(QTcpSocket * socket)
 {
 	// Create packet
@@ -574,6 +835,27 @@ void CommAudio::requestForSongs(QTcpSocket * socket)
 	socket->write(packet);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		returnSongList
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Roger Zhang
+--
+-- INTERFACE:		returnSongList (QTcpSocket * socket)
+--						QTcpSocket * socket: The socket to write to.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Returns the list of currently selected songs to the socket as a response to a request.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::returnSongList(QTcpSocket * socket)
 {
 	int initSize = 1 + KEY_SIZE + 4;
@@ -594,6 +876,27 @@ void CommAudio::returnSongList(QTcpSocket * socket)
 	socket->write(packet);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		returnSongList
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Roger Zhang
+--
+-- INTERFACE:		returnSongList (QTcpSocket * socket)
+--						QTcpSocket * socket: The socket to write to.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Sends a list of currently selected songs to the socket.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::sendSongList(QTcpSocket * socket)
 {
 	int initSize = 1 + KEY_SIZE + 4;
@@ -614,6 +917,28 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 	socket->write(packet);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		connectToAllOtherClients
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Roger Zhang
+--
+-- INTERFACE:		connectToAllOtherClients (const QByteArray data)
+--						const QByteArray data: The incoming data.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Sends a connect request to all other clients that were sent to over in the data.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::connectToAllOtherClients(const QByteArray data)
 {
 	setWindowTitle(TITLE_CLIENT);
@@ -658,7 +983,26 @@ void CommAudio::connectToAllOtherClients(const QByteArray data)
 	}
 }
 
-// This is to handle a disconnect from a client requesting the leave session and to this client
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		remoteDisconnectHandler
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Angus Lam
+--
+-- INTERFACE:		remoteDisconnectHandler ()
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Cleans up after a socket has disconnected.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::remoteDisconnectHandler()
 {
 	//Get the socket that sent the signal
@@ -696,6 +1040,28 @@ void CommAudio::remoteDisconnectHandler()
 	sender->deleteLater();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		displayClientName
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--
+-- INTERFACE:		displayClientName (const QByteArray data, QTcpSocket * socket)
+--						cosnt QByteArray data: The data containing the name.
+--						QTcpSocket * socket: The socket that sent the data.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Displays the client's name on the GUI for the user.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::displayClientName(const QByteArray data, QTcpSocket * socket)
 {
 	quint32 address = socket->peerAddress().toIPv4Address();
@@ -705,6 +1071,28 @@ void CommAudio::displayClientName(const QByteArray data, QTcpSocket * socket)
 	ui.treeUsers->insertTopLevelItem(ui.treeUsers->topLevelItemCount(), new QTreeWidgetItem(ui.treeUsers, otherClient));
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		displayClientName
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Roger Zhang
+--
+-- INTERFACE:		displaySongName (const QByteArray data, QTcpSocket * socket)
+--						cosnt QByteArray data: The data containing the list of songs.
+--						QTcpSocket * socket: The socket that sent the data.
+--
+-- RETURNS:			void.		
+--
+-- NOTES:
+--					Displays the list of incoming songs on the GUI for the user.
+----------------------------------------------------------------------------------------------------------------------*/
 void CommAudio::displaySongName(const QByteArray data, QTcpSocket * sender)
 {
 	quint32 length = -1;

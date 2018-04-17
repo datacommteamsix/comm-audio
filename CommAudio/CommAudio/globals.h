@@ -1,3 +1,31 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE:		globals.h - A file that contains global definitions of variables and functions used throughout
+--								the program.
+--
+-- PROGRAM:			CommAudio
+--
+--
+-- FUNCTIONS:
+--					inline QByteArray &operator<<(QByteArray &l, quint8 r)
+--					inline QByteArray &operator<<(QByteArray &l, quint16 r)
+--					inline QByteArray &operator<<(QByteArray &l, quint32 r)
+--
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A
+--
+-- DESIGNER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- PROGRAMMER:		Benny Wang
+--					Angus Lam
+--					Roger Zhang
+--
+-- NOTES:
+--					This is a central location for all the glboals that are used in the program.
+----------------------------------------------------------------------------------------------------------------------*/
 #pragma once
 
 #define TITLE_DEFAULT	"CommAudio - No Session"
@@ -39,6 +67,7 @@ struct WavHeader
     int    bytesInData;
 };
 
+// Packet headers
 enum Headers
 {
 	RequestToJoin,
@@ -56,19 +85,79 @@ enum Headers
 };
 
 // Following functions from - https://stackoverflow.com/questions/30660127/append-quint16-unsigned-short-to-qbytearray-quickly
-inline QByteArray &operator<<(QByteArray &l, quint8 r)
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		operator<<
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Matteo Italia
+--
+-- PROGRAMMER:		Matteo Italia
+--
+-- INTERFACE:		operator<< (QByteArray& l, quint8 r)
+--						QByteArray& l: The original QByteArray.
+--						quint8 r: The number that will be appended.
+--
+-- RETURNS:			The new QByteArray reference.
+--
+-- NOTES:
+--					Appends a quint8 as a byte to the QByteArray and returns the new QByteArray.
+----------------------------------------------------------------------------------------------------------------------*/
+inline QByteArray& operator<<(QByteArray& l, quint8 r)
 {
 	l.append(r);
 	return l;
 }
 
-inline QByteArray &operator<<(QByteArray &l, quint16 r)
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		operator<<
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Matteo Italia
+--
+-- PROGRAMMER:		Matteo Italia
+--
+-- INTERFACE:		operator<< (QByteArray& l, quint16 r)
+--						QByteArray& l: The original QByteArray.
+--						quint16 r: The number that will be appended.
+--
+-- RETURNS:			The new QByteArray reference.
+--
+-- NOTES:
+--					Appends a quint16 as two bytes to the QByteArray and returns the new QByteArray.
+----------------------------------------------------------------------------------------------------------------------*/
+inline QByteArray& operator<<(QByteArray& l, quint16 r)
 {
 	return l << quint8(r >> 8) << quint8(r);
 }
 
-inline QByteArray &operator<<(QByteArray &l, quint32 r)
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:		operator<<
+--
+-- DATE:			March 26, 2018
+--
+-- REVISIONS:		N/A	
+--
+-- DESIGNER:		Matteo Italia
+--
+-- PROGRAMMER:		Matteo Italia
+--
+-- INTERFACE:		operator<< (QByteArray& l, quint32 r)
+--						QByteArray& l: The original QByteArray.
+--						quint32 r: The number that will be appended.
+--
+-- RETURNS:			The new QByteArray reference.
+--
+-- NOTES:
+--					Appends a quint32 as four bytes to the QByteArray and returns the new QByteArray.
+----------------------------------------------------------------------------------------------------------------------*/
+inline QByteArray& operator<<(QByteArray& l, quint32 r)
 {
 	return l << quint16(r >> 16) << quint16(r);
 }
-// ---------------------------------------------------------------------------------------------------------------------------
