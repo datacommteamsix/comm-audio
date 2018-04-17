@@ -20,11 +20,11 @@ class ConnectionManager : public QWidget
 	Q_OBJECT
 
 public:
-	ConnectionManager(QString * name, QWidget * parent = nullptr);
+	ConnectionManager(QByteArray * key, QString * name, QWidget * parent = nullptr);
 	~ConnectionManager();
 
 	void Init(QMap<QString, QTcpSocket *> * connectedClients);
-	void BecomeHost(QByteArray key);
+	void BecomeHost();
 	void BecomeClient();
 
 	void AddPendingConnection(const quint32 address, QTcpSocket * socket);
@@ -32,7 +32,7 @@ public:
 private:
 	bool mIsHost;
 	QString * mName;
-	QByteArray mKey;
+	QByteArray * mKey;
 
 	QTcpServer mServer;
 	QMap<QString, QTcpSocket *> * mConnectedClients;

@@ -1,10 +1,11 @@
 #include "ConnectionManager.h"
 
-ConnectionManager::ConnectionManager(QString * name, QWidget * parent)
+ConnectionManager::ConnectionManager(QByteArray * key, QString * name, QWidget * parent)
 	: QWidget(parent)
 	, mName(name)
 	, mIsHost(false)
 	, mServer(this)
+	, mKey(key)
 {
 }
 
@@ -23,16 +24,14 @@ void ConnectionManager::Init(QMap<QString, QTcpSocket *> * connectedClients)
 	startServerListen();
 }
 
-void ConnectionManager::BecomeHost(QByteArray key)
+void ConnectionManager::BecomeHost()
 {
 	mIsHost = true;
-	mKey = key;
 }
 
 void ConnectionManager::BecomeClient()
 {
 	mIsHost = false;
-	mKey = QByteArray();
 }
 
 void ConnectionManager::AddPendingConnection(const quint32 address, QTcpSocket * socket)
@@ -53,14 +52,16 @@ void ConnectionManager::sendListOfClients(QTcpSocket * socket)
 	QByteArray packet = QByteArray(1, (char)Headers::RespondToJoin);
 
 	// Add the session key to the packet
-	packet.append(mKey);
+	packet.append(*mKey);
+
+	// Add name of host
+	QByteArray name = QByteArray(USER_NAME_SIZE, 0);
+	name.replace(0, mName->size(), mName->toStdString().c_str());
+	packet.append(name);
 
 	// Add the number of clients to the packet
 	quint32 size = mConnectedClients->size() - 1;
 	packet.append(size);
-
-	// Assert the packet header is the correct length
-	assert(packet.size() == 1 + 32 + 1);
 
 	// Send list of currently connected clients to the new client
 	for (QTcpSocket * connection : *mConnectedClients)
@@ -108,9 +109,9 @@ void ConnectionManager::incomingDataHandler()
 	QByteArray data = socket->readAll();
 
 	// Check if incoming data is a valid request to join packet
-	if (data.size() != 1 + 33)
+	if (data.size() != 1 + USER_NAME_SIZE)
 	{
-		qDebug() << "Expecting request to join packet of length" << 1 + 33 << "but packet of size" << data.size() << "was received";
+		qDebug() << "Expecting request to join packet of length" << 1 + USER_NAME_SIZE << "but packet of size" << data.size() << "was received";
 		return;
 	}
 
@@ -147,16 +148,20 @@ void ConnectionManager::parseJoinRequest(const QByteArray data, QTcpSocket * soc
 
 	if (!isAlreadyConnected)
 	{
-		emit connectionAccepted(clientName, socket);
-
 		if (mIsHost)
 		{
-			// If this is a new client
+			emit connectionAccepted(clientName, socket);
 			sendListOfClients(socket);
 		}
 		else
 		{
-			sendName(socket);
+			QByteArray incomingKey = data.mid(1, KEY_SIZE);
+
+			if (incomingKey == *mKey)
+			{
+				emit connectionAccepted(clientName, socket);
+				sendName(socket);
+			}
 		}
 	}
 
