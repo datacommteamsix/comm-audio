@@ -1,8 +1,5 @@
 #pragma once
 
-#include <assert.h>
-#include <QDebug>
-
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QFile>
@@ -25,7 +22,7 @@ public:
 	};
 
 	MediaPlayer(Ui::CommAudioClass * ui, QWidget * parent = nullptr);
-	~MediaPlayer();
+	~MediaPlayer() = default;
 
 	void SetSong(QString absoluteFileName);
 	void StartStream(QIODevice * stream);

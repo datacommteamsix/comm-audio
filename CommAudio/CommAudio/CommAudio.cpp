@@ -142,7 +142,7 @@ CommAudio::~CommAudio()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::populateLocalSongsList
+-- FUNCTION:		populateLocalSongsList
 --
 -- DATE:			March 26, 2018
 --
@@ -198,7 +198,7 @@ QString CommAudio::getAddressFromUser()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::hostSessionHandler
+-- FUNCTION:		hostSessionHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -274,8 +274,6 @@ void CommAudio::joinSessionHandler()
 	joinRequest.replace(1, mName.size(), mName.toStdString().c_str());
 	joinRequest.resize(1 + 33);
 
-	assert(joinRequest.size() == 1 + 33);
-
 	// Create connection
 	QString address = getAddressFromUser();
 
@@ -335,7 +333,7 @@ void CommAudio::leaveSessionHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::changeNameHandler
+-- FUNCTION:		:changeNameHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -363,7 +361,7 @@ void CommAudio::changeNameHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::changeSongFolderHandler
+-- FUNCTION:		changeSongFolderHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -398,7 +396,7 @@ void CommAudio::changeSongFolderHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::changeDownloadFolderHandler
+-- FUNCTION:		:changeDownloadFolderHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -430,7 +428,7 @@ void CommAudio::changeDownloadFolderHandler()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:		CommAudio::localSongClickedHandler
+-- FUNCTION:		localSongClickedHandler
 --
 -- DATE:			March 26, 2018
 --
@@ -484,15 +482,11 @@ void CommAudio::remoteMenuHandler(const QPoint & pos)
 void CommAudio::downloadSong()
 {
 	QTcpSocket * socket = mConnections[nd->text(1)];
-	qDebug() << nd->text(0) << "-" << nd->text(1);
 	mDownloadManager.DownloadFile(nd->text(0), socket->peerAddress().toIPv4Address());
 }
 
 void CommAudio::newConnectionHandler(QString name, QTcpSocket * socket)
 {
-	assert(socket != nullptr);
-	assert(!mConnections.contains(name));
-
 	//Insert name and ip to map
 	mIpToName.insert(socket->peerAddress().toIPv4Address(), name);
 
