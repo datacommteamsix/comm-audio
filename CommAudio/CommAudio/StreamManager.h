@@ -29,6 +29,7 @@ private:
 	QAudioFormat mFormat;
 
 	quint32 mSongSource;
+	QMap<quint32, QBuffer *> mBuffers;
 	QMap<quint32, QTcpSocket *> mConnections;
 
 	QTcpServer mServer;
