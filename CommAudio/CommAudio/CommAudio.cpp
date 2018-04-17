@@ -223,6 +223,8 @@ QString CommAudio::getAddressFromUser()
 void CommAudio::hostSessionHandler()
 {
 	leaveSessionHandler();
+	ui.actionHostSession->setDisabled(true);
+	ui.actionJoinSession->setDisabled(true);
 
 	// Generate session key
 	QCryptographicHash hasher(QCryptographicHash::Sha3_256);
@@ -263,6 +265,8 @@ void CommAudio::hostSessionHandler()
 void CommAudio::joinSessionHandler()
 {
 	leaveSessionHandler();
+	ui.actionHostSession->setDisabled(true);
+	ui.actionJoinSession->setDisabled(true);
 
 	mVoip.Start();
 
@@ -307,6 +311,8 @@ void CommAudio::joinSessionHandler()
 
 void CommAudio::leaveSessionHandler()
 {
+	ui.actionHostSession->setDisabled(false);
+	ui.actionJoinSession->setDisabled(false);
 	setWindowTitle(TITLE_DEFAULT);
 
 	mIsHost = false;
