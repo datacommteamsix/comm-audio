@@ -283,9 +283,18 @@ void VoipModule::newClientHandler(QHostAddress address)
 -- NOTES:
 --					This is a Qt slot that is triggered when a connection is disconnected. The socket and associated
 --					QAudioInput and QAudioOuputs are closed and removed from their maps.
+--
+--					Special Note: Because of Qt signal/slot thread saftey issues, it is possible for this function to
+--								  run after ~VoipModule() has deleted the maps. To avoid a null pointer exception from
+--								  stopping the other deconstructors, we simply check the length first before executing.
 ----------------------------------------------------------------------------------------------------------------------*/
 void VoipModule::clientDisconnectHandler()
 {
+	if (mConnections.size() < 0 && mOutputs.size() < 0 && mInputs.size() < 0)
+	{
+		return;
+	}
+
 	QTcpSocket * sender = (QTcpSocket *)QObject::sender();
 	quint32 address = sender->peerAddress().toIPv4Address();
 
