@@ -302,10 +302,7 @@ void CommAudio::joinSessionHandler()
 	// Send data
 	socket->write(joinRequest);
 
-
-
 	emit connectVoip(hostAddress);
-	setWindowTitle(TITLE_CLIENT);
 }
 
 void CommAudio::leaveSessionHandler()
@@ -615,6 +612,8 @@ void CommAudio::sendSongList(QTcpSocket * socket)
 
 void CommAudio::connectToAllOtherClients(const QByteArray data)
 {
+	setWindowTitle(TITLE_CLIENT);
+
 	// Grab session key
 	mSessionKey = data.mid(1, KEY_SIZE);
 
