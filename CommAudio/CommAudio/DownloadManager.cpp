@@ -212,7 +212,10 @@ void DownloadManager::uploadSong(QByteArray data, QTcpSocket * socket)
 {
 	quint32 address = socket->peerAddress().toIPv4Address();
 
-	// TODO: Check session key
+	if (data.mid(1, 32) != *mKey)
+	{
+		return;
+	}
 
 	QFile file(mSource->absoluteFilePath(data.mid(KEY_SIZE)));
 	file.open(QFile::ReadOnly);
